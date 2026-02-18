@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Snzmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-950 text-white flex items-center justify-center h-screen">
+    <div class="bg-gray-900 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-800">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-black text-blue-500 tracking-tighter italic">Snzmart</h1>
+            <p class="text-gray-500 text-xs mt-2 uppercase tracking-widest font-bold">Admin Central Access</p>
+        </div>
+        <div class="space-y-4">
+            <input type="email" id="loginEmail" placeholder="Admin Email" class="w-full p-4 bg-gray-800 rounded-2xl outline-none border border-gray-700 focus:border-blue-500 transition">
+            <input type="password" id="loginPw" placeholder="Password" class="w-full p-4 bg-gray-800 rounded-2xl outline-none border border-gray-700 focus:border-blue-500 transition">
+            <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-black shadow-lg shadow-blue-900/20 transition-all active:scale-95">MASUK SEKARANG</button>
+        </div>
+    </div>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>docs | snzmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=fira+code:wght@400;500&display=swap');
+        .console-text { font-family: 'fira code', monospace; }
+        .cursor { display: inline-block; width: 6px; height: 12px; background: #3b82f6; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        pre { tab-size: 2; white-space: pre-wrap; word-break: break-all; }
+        .code-container { background: rgba(0, 0, 0, 0.5); border: 1px solid #1f2937; padding: 1rem; border-radius: 0.75rem; margin-top: 0.5rem; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-400 font-sans text-xs">
+
+    <nav class="bg-gray-900/50 backdrop-blur-md px-5 py-3 flex justify-between items-center border-b border-gray-800 sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <h1 class="text-sm font-bold tracking-tight text-blue-500 lowercase">snzmart docs</h1>
+        </div>
+        <div class="flex gap-4 items-center text-[10px] font-medium lowercase">
+            <a href="dashboard.html" class="hover:text-white transition">inventory</a>
+            <button onclick="handleLogout()" class="text-red-500/80">exit</button>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4 max-w-3xl">
+        
+        <div class="bg-gray-900/30 rounded-xl border border-gray-800 shadow-sm overflow-hidden mb-6">
+            <div class="bg-gray-900/50 px-3 py-2 border-b border-gray-800 flex items-center justify-between">
+                <span class="text-[9px] text-gray-600 font-mono lowercase tracking-wider">system status</span>
+            </div>
+            <div class="p-4 h-32 overflow-y-auto console-text text-[11px] leading-relaxed" id="consoleOutput">
+                <div class="text-blue-500">snzmart@user:~$ <span class="text-white">check --connection</span></div>
+                <div id="dynamicLogs"></div>
+                <div class="mt-1"><span class="cursor"></span></div>
+            </div>
+        </div>
+
+        <div class="space-y-8">
+            <section>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-blue-500 font-bold">#</span>
+                    <h3 class="font-bold text-gray-200 lowercase">ambil data produk</h3>
+                </div>
+                <p class="text-gray-500 lowercase">pake kode ini di script bot buat nampilin list menu.</p>
+                <div class="code-container">
+                    <pre id="codeGet" class="text-[10px] text-pink-400/90 leading-normal">loading...</pre>
+                </div>
+                <p class="mt-4 text-gray-500 lowercase">contoh respon yang bakal didapet:</p>
+                <div class="code-container">
+                    <pre class="text-[10px] text-yellow-500/80">
+[
+  {
+    "id": "uuid-123",
+    "nama": "netflix premium",
+    "harga": 35000,
+    "kategori": "AKUN",
+    "deskripsi": "durasi 30 hari"
+  }
+]</pre>
+                </div>
+            </section>
+
+            <section>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-red-500 font-bold">#</span>
+                    <h3 class="font-bold text-gray-200 lowercase">hapus data (beli)</h3>
+                </div>
+                <p class="text-gray-500 lowercase">pake kode ini biar stok otomatis berkurang pas ada yang beli.</p>
+                <div class="code-container">
+                    <pre id="codeDel" class="text-[10px] text-green-400/90 leading-normal">loading...</pre>
+                </div>
+                <p class="mt-4 text-gray-500 lowercase">respon kalo berhasil:</p>
+                <div class="code-container">
+                    <pre class="text-[10px] text-yellow-500/80">status: 204 no content (berarti data udah kehapus)</pre>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        const logsContainer = document.getElementById('dynamicLogs');
+        
+        function renderIntegrationCode() {
+            const getBlock = document.getElementById('codeGet');
+            const delBlock = document.getElementById('codeDel');
+
+            if (typeof CONFIG !== 'undefined') {
+                getBlock.innerText = `const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=*", {
+  headers: {
+    "apikey": "${CONFIG.SB_KEY}",
+    "Authorization": "Bearer ${CONFIG.SB_KEY}"
+  }
+});`;
+
+                delBlock.innerText = `await axios.delete("${CONFIG.SB_URL}/rest/v1/produk?id=eq.\${id}", {
+  headers: {
+    "apikey": "${CONFIG.SB_KEY}",
+    "Authorization": "Bearer ${CONFIG.SB_KEY}"
+  }
+});`;
+            } else {
+                getBlock.innerText = "// error: config.js gak kebaca co";
+                delBlock.innerText = "// error: config.js gak kebaca co";
+            }
+        }
+
+        async function simulateLogs() {
+            const logs = [
+                { t: "loading config...", c: "text-gray-600" },
+                { t: "connected to supabase", c: "text-green-600" },
+                { t: "ready to integrate", c: "text-blue-400" }
+            ];
+            for (let log of logs) {
+                await new Promise(r => setTimeout(r, 700));
+                const div = document.createElement('div');
+                div.className = log.c;
+                div.innerText = `> ${log.t}`;
+                logsContainer.appendChild(div);
+            }
+        }
+
+        window.onload = () => {
+            if(typeof checkAuth === "function") checkAuth();
+            renderIntegrationCode();
+            simulateLogs();
+        };
+    </script>
+</body>
+</html>
