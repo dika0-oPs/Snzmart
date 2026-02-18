@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dashboard | snzmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=plus+jakarta+sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'plus jakarta sans', sans-serif; background-color: #050505; }
+        .glass { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-gray-400 text-xs">
+
+    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_#3b82f6]"></div>
+            <h1 class="text-sm font-extrabold text-white tracking-tighter lowercase">snzmart admin</h1>
+        </div>
+        <div class="flex gap-4 items-center">
+            <a href="docs.html" class="hover:text-blue-400 transition lowercase">docs</a>
+            <button onclick="handleLogout()" class="text-red-500/80 hover:text-red-400 lowercase">exit</button>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 max-w-4xl">
+        
+        <section class="mb-10">
+            <h2 class="text-white font-bold mb-4 lowercase flex items-center gap-2">
+                <i class="fas fa-plus-circle text-blue-500"></i> tambah produk baru
+            </h2>
+            <div class="glass p-6 rounded-2xl space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="nama" placeholder="nama produk :" class="bg-black/50 p-3 rounded-xl border border-gray-800 outline-none focus:border-blue-500 transition">
+                    <input type="number" id="harga" placeholder="harga (angka) :" class="bg-black/50 p-3 rounded-xl border border-gray-800 outline-none focus:border-blue-500 transition">
+                    <input type="text" id="email" placeholder="email / data akun :" class="bg-black/50 p-3 rounded-xl border border-gray-800 outline-none focus:border-blue-500 transition">
+                    <input type="text" id="pw" placeholder="password akun :" class="bg-black/50 p-3 rounded-xl border border-gray-800 outline-none focus:border-blue-500 transition">
+                </div>
+                <input type="file" id="foto" accept="image/*" class="w-full text-[10px] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                <button onclick="uploadProduk()" id="btnUpload" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-blue-900/20 lowercase">
+                    upload ke snzmart
+                </button>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-white font-bold mb-4 lowercase flex items-center gap-2">
+                <i class="fas fa-boxes text-blue-500"></i> inventory stok
+            </h2>
+            <div id="productList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="text-gray-600 italic">loading data...</p>
+            </div>
+        </section>
+    </main>
+
+    <div id="editModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
+        <div class="glass p-6 rounded-3xl w-full max-w-sm border border-blue-500/20">
+            <h2 class="text-white font-bold mb-4 lowercase">edit produk</h2>
+            <div class="space-y-3">
+                <div class="space-y-1">
+                    <label class="text-[10px] text-gray-500 ml-1">email baru :</label>
+                    <input id="editEmail" type="text" class="w-full bg-black p-3 rounded-xl border border-gray-800 outline-none text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] text-gray-500 ml-1">pw baru :</label>
+                    <input id="editPw" type="text" class="w-full bg-black p-3 rounded-xl border border-gray-800 outline-none text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] text-gray-500 ml-1">harga baru :</label>
+                    <input id="editHarga" type="number" class="w-full bg-black p-3 rounded-xl border border-gray-800 outline-none text-white">
+                </div>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="prosesUpdate()" class="flex-1 bg-blue-600 text-white p-3 rounded-xl font-bold lowercase">simpan</button>
+                    <button onclick="closeEdit()" class="flex-1 bg-gray-800 text-white p-3 rounded-xl font-bold lowercase">batal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        let currentEditId = null;
+
+        window.onload = () => {
+            if(typeof checkAuth === 'function') checkAuth();
+            loadProduk();
+        };
+
+        async function loadProduk() {
+            const list = document.getElementById('productList');
+            try {
+                const res = await fetch(`${CONFIG.SB_URL}/rest/v1/produk?select=*&order=created_at.desc`, {
+                    headers: {
+                        'apikey': CONFIG.SB_KEY,
+                        'Authorization': `Bearer ${CONFIG.SB_KEY}`
+                    }
+                });
+                const data = await res.json();
+                list.innerHTML = '';
+
+                data.forEach(p => {
+                    list.innerHTML += `
+                        <div class="glass p-4 rounded-2xl flex flex-col gap-3">
+                            <img src="${p.foto_url}" class="w-full h-32 object-cover rounded-xl bg-gray-800" onerror="this.src='https://placehold.co/400x200?text=no+image'">
+                            <div>
+                                <h3 class="text-white font-bold lowercase">${p.nama}</h3>
+                                <p class="text-blue-500 font-bold mt-1">rp ${parseInt(p.harga).toLocaleString()}</p>
+                            </div>
+                            <div class="bg-black/40 p-3 rounded-xl border border-gray-800 space-y-1 font-mono text-[10px]">
+                                <p class="truncate"><span class="text-gray-600">user:</span> ${p.email || '-'}</p>
+                                <p class="truncate"><span class="text-gray-600">pass:</span> ${p.pw || '-'}</p>
+                            </div>
+                            <div class="flex gap-2 mt-2">
+                                <button onclick="openEdit('${p.id}', '${p.email || ''}', '${p.pw || ''}', '${p.harga}')" class="flex-1 py-2 bg-yellow-600/10 text-yellow-500 rounded-lg hover:bg-yellow-600/20 transition lowercase">edit</button>
+                                <button onclick="hapusProduk('${p.id}')" class="flex-1 py-2 bg-red-600/10 text-red-500 rounded-lg hover:bg-red-600/20 transition lowercase">hapus</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                list.innerHTML = '<p class="text-red-500">gagal load data co</p>';
+            }
+        }
+
+        function openEdit(id, email, pw, harga) {
+            currentEditId = id;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editPw').value = pw;
+            document.getElementById('editHarga').value = harga;
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEdit() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        async function prosesUpdate() {
+            const email = document.getElementById('editEmail').value;
+            const pw = document.getElementById('editPw').value;
+            const harga = document.getElementById('editHarga').value;
+
+            try {
+                const res = await fetch(`${CONFIG.SB_URL}/rest/v1/produk?id=eq.${currentEditId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': CONFIG.SB_KEY,
+                        'Authorization': `Bearer ${CONFIG.SB_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, pw, harga })
+                });
+
+                if(res.ok) {
+                    closeEdit();
+                    loadProduk();
+                } else {
+                    alert('gagal update co');
+                }
+            } catch (e) {
+                alert('error: ' + e.message);
+            }
+        }
+
+        async function hapusProduk(id) {
+            if(!confirm('yakin mau hapus co?')) return;
+            try {
+                const res = await fetch(`${CONFIG.SB_URL}/rest/v1/produk?id=eq.${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': CONFIG.SB_KEY,
+                        'Authorization': `Bearer ${CONFIG.SB_KEY}`
+                    }
+                });
+                if(res.ok) loadProduk();
+            } catch (e) {
+                alert('gagal hapus');
+            }
+        }
+    </script>
+</body>
+</html>
