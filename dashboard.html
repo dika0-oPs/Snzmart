@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dashboard | snzmart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=plus+jakarta+sans:wght@300;400;600;800&display=swap');
+        body { font-family: 'plus jakarta sans', sans-serif; background-color: #050505; color: #9ca3af; }
+        .glass { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        input, select { background-color: rgba(0,0,0,0.5) !important; border: 1px solid #1f2937 !important; color: white !important; }
+        input:focus { border-color: #3b82f6 !important; }
+    </style>
+</head>
+<body class="text-xs">
+
+    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <h1 class="text-sm font-bold text-white lowercase">snzmart dashboard</h1>
+        </div>
+        <div class="flex gap-4 lowercase">
+            <a href="docs.html" class="hover:text-blue-400">docs</a>
+            <button onclick="handleLogout()" class="text-red-500/80">exit</button>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 max-w-4xl">
+        
+        <section class="mb-10">
+            <h2 class="text-white font-bold mb-4 lowercase flex items-center gap-2">
+                <i class="fas fa-plus-circle text-blue-500"></i> tambah produk baru
+            </h2>
+            <div class="glass p-6 rounded-2xl space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="nama" placeholder="nama produk :" class="p-3 rounded-xl outline-none text-xs">
+                    <input type="number" id="harga" placeholder="harga (angka) :" class="p-3 rounded-xl outline-none text-xs">
+                    <select id="kategori" onchange="toggleInputTambah()" class="p-3 rounded-xl outline-none text-xs">
+                        <option value="AKUN">kategori: akun (email/pw)</option>
+                        <option value="ITEM">kategori: item (link/id)</option>
+                    </select>
+                    <div id="wrapTambahAkun" class="contents">
+                        <input type="text" id="email" placeholder="email akun :" class="p-3 rounded-xl outline-none text-xs">
+                        <input type="text" id="pw" placeholder="password akun :" class="p-3 rounded-xl outline-none text-xs">
+                    </div>
+                    <div id="wrapTambahItem" class="hidden w-full col-span-1 md:col-span-2">
+                        <input type="text" id="link" placeholder="link / id item :" class="w-full p-3 rounded-xl outline-none text-xs">
+                    </div>
+                </div>
+                <input type="file" id="foto" accept="image/*" class="w-full text-[10px] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-600 file:text-white">
+                <button onclick="uploadProduk()" id="btnUpload" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition lowercase">
+                    upload ke snzmart
+                </button>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-white font-bold mb-4 lowercase flex items-center gap-2">
+                <i class="fas fa-boxes text-blue-500"></i> stok inventory
+            </h2>
+            <div id="productList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="italic">memuat data...</p>
+            </div>
+        </section>
+    </main>
+
+    <div id="editModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-[100] backdrop-blur-md">
+        <div class="glass p-6 rounded-3xl w-full max-w-sm border border-blue-500/20">
+            <h2 class="text-white font-bold mb-4 lowercase">edit produk</h2>
+            <div class="space-y-4">
+                <div id="editFields" class="space-y-3">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] text-gray-500 ml-1">harga baru :</label>
+                    <input id="editHarga" type="number" class="w-full p-3 rounded-xl outline-none text-white">
+                </div>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="prosesUpdate()" class="flex-1 bg-blue-600 text-white p-3 rounded-xl font-bold lowercase">simpan</button>
+                    <button onclick="closeEdit()" class="flex-1 bg-gray-800 text-white p-3 rounded-xl font-bold lowercase">batal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        let currentEditId = null;
+        let currentEditKategori = "";
+
+        window.onload = () => {
+            if(typeof checkAuth === 'function') checkAuth();
+            loadProduk();
+        };
+
+        function toggleInputTambah() {
+            const kat = document.getElementById('kategori').value;
+            document.getElementById('wrapTambahAkun').classList.toggle('hidden', kat !== 'AKUN');
+            document.getElementById('wrapTambahItem').classList.toggle('hidden', kat !== 'ITEM');
+        }
+
+        async function loadProduk() {
+            const list = document.getElementById('productList');
+            try {
+                const res = await fetch(`${CONFIG.SB_URL}/rest/v1/produk?select=*&order=created_at.desc`, {
+                    headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
+                });
+                const data = await res.json();
+                list.innerHTML = '';
+
+                data.forEach(p => {
+                    const isAkun = p.kategori === 'AKUN';
+                    list.innerHTML += `
+                        <div class="glass p-4 rounded-2xl flex flex-col gap-3">
+                            <img src="${p.foto_url}" class="w-full h-32 object-cover rounded-xl bg-gray-800" onerror="this.src='https://placehold.co/400x200?text=no+image'">
+                            <div>
+                                <span class="text-[9px] bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full lowercase">${p.kategori}</span>
+                                <h3 class="text-white font-bold mt-1 lowercase">${p.nama}</h3>
+                                <p class="text-blue-500 font-bold">rp ${parseInt(p.harga).toLocaleString()}</p>
+                            </div>
+                            <div class="bg-black/40 p-3 rounded-xl border border-gray-800 space-y-1 font-mono text-[10px]">
+                                ${isAkun ? `<p class="truncate"><span class="text-gray-600">user:</span> ${p.email || '-'}</p>
+                                            <p class="truncate"><span class="text-gray-600">pass:</span> ${p.pw || '-'}</p>` : 
+                                           `<p class="truncate"><span class="text-gray-600">link:</span> ${p.link || '-'}</p>`}
+                            </div>
+                            <div class="flex gap-2 mt-2">
+                                <button onclick="openEdit('${p.id}', '${p.kategori}', '${p.email || ''}', '${p.pw || ''}', '${p.link || ''}', '${p.harga}')" class="flex-1 py-2 bg-yellow-600/10 text-yellow-500 rounded-lg lowercase">edit</button>
+                                <button onclick="hapusProduk('${p.id}')" class="flex-1 py-2 bg-red-600/10 text-red-500 rounded-lg lowercase">hapus</button>
+                            </div>
+                        </div>`;
+                });
+            } catch (e) { list.innerHTML = '<p class="text-red-500 text-center">gagal load data co</p>'; }
+        }
+
+        function openEdit(id, kategori, email, pw, link, harga) {
+            currentEditId = id;
+            currentEditKategori = kategori;
+            const fields = document.getElementById('editFields');
+            document.getElementById('editHarga').value = harga;
+
+            if (kategori === 'AKUN') {
+                fields.innerHTML = `
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-gray-500 ml-1">email baru :</label>
+                        <input id="editEmail" type="text" value="${email}" class="w-full p-3 rounded-xl outline-none text-white">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-gray-500 ml-1">pw baru :</label>
+                        <input id="editPw" type="text" value="${pw}" class="w-full p-3 rounded-xl outline-none text-white">
+                    </div>`;
+            } else {
+                fields.innerHTML = `
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-gray-500 ml-1">link/id baru :</label>
+                        <input id="editLink" type="text" value="${link}" class="w-full p-3 rounded-xl outline-none text-white">
+                    </div>`;
+            }
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEdit() { document.getElementById('editModal').classList.add('hidden'); }
+
+        async function prosesUpdate() {
+            const body = { harga: document.getElementById('editHarga').value };
+            if (currentEditKategori === 'AKUN') {
+                body.email = document.getElementById('editEmail').value;
+                body.pw = document.getElementById('editPw').value;
+            } else {
+                body.link = document.getElementById('editLink').value;
+            }
+
+            try {
+                const res = await fetch(`${CONFIG.SB_URL}/rest/v1/produk?id=eq.${currentEditId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': CONFIG.SB_KEY,
+                        'Authorization': `Bearer ${CONFIG.SB_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                if(res.ok) { closeEdit(); loadProduk(); }
+            } catch (e) { alert('gagal update co'); }
+        }
+
+        async function hapusProduk(id) {
+            if(!confirm('yakin mau hapus co?')) return;
+            try {
+                await fetch(`${CONFIG.SB_URL}/rest/v1/produk?id=eq.${id}`, {
+                    method: 'DELETE',
+                    headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
+                });
+                loadProduk();
+            } catch (e) { alert('gagal hapus'); }
+        }
+    </script>
+</body>
+</html>
