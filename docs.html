@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>docs| SNZMART</title>
+    <title>Integrasi API Lengkap | SNZMART DOCS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap');
@@ -15,6 +15,7 @@
         .digital-clock { font-family: 'Courier New', Courier, monospace; }
         .cursor { display: inline-block; width: 6px; height: 12px; background: #3b82f6; animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .json-box { background: rgba(0, 0, 0, 0.3); border: 1px dashed #1f2937; }
     </style>
 </head>
 <body class="bg-[#0b0f1a] text-gray-100">
@@ -38,28 +39,29 @@
     </nav>
 
     <div class="container mx-auto p-6 max-w-4xl">
-        
         <div class="mb-10 bg-[#111827] rounded-[2rem] border border-gray-800 overflow-hidden shadow-2xl">
             <div class="bg-gray-900/50 px-6 py-3 border-b border-gray-800 flex justify-between items-center">
                 <span class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Bot Integration Terminal</span>
             </div>
             <div class="p-6 h-32 overflow-y-auto code-font text-[11px] leading-relaxed bg-[#0b0f1a]/50" id="consoleOutput">
-                <div class="text-blue-500">snzmart@bot:~$ <span class="text-white italic">run --full-guide</span></div>
+                <div class="text-blue-500">snzmart@bot:~$ <span class="text-white italic">run --full-api-guide --include-images</span></div>
                 <div id="dynamicLogs" class="mt-1"></div>
                 <div class="mt-1"><span class="cursor"></span></div>
             </div>
         </div>
 
-        <div class="space-y-12">
-            
+        <div class="space-y-16">
             <section>
                 <div class="flex items-center gap-3 mb-4">
                     <div class="bg-purple-600 w-1.5 h-6 rounded-full"></div>
                     <h3 class="text-xl font-black text-white uppercase italic tracking-tight">1. List Kategori (Unique)</h3>
                 </div>
-                <p class="text-gray-500 text-sm mb-4">Ambil semua kategori yang ada di database tanpa duplikat untuk menu awal bot.</p>
-                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 overflow-hidden">
+                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 mb-4">
                     <pre id="codeKat" class="code-font text-[11px] text-purple-400 overflow-x-auto">Memuat...</pre>
+                </div>
+                <div class="json-box p-4 rounded-2xl">
+                    <p class="text-[10px] text-gray-500 font-black uppercase mb-2 tracking-widest italic">// Respon Filter Unik</p>
+                    <pre class="code-font text-[10px] text-yellow-500/80">["AKUN", "APP PREMIUM", "STREAMING", "GAME"]</pre>
                 </div>
             </section>
 
@@ -68,9 +70,16 @@
                     <div class="bg-blue-600 w-1.5 h-6 rounded-full"></div>
                     <h3 class="text-xl font-black text-white uppercase italic tracking-tight">2. List Produk per Kategori</h3>
                 </div>
-                <p class="text-gray-500 text-sm mb-4">Tampilkan daftar produk beserta ID-nya setelah user memilih kategori tertentu.</p>
-                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 overflow-hidden">
+                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 mb-4">
                     <pre id="codeList" class="code-font text-[11px] text-blue-400 overflow-x-auto">Memuat...</pre>
+                </div>
+                <div class="json-box p-4 rounded-2xl">
+                    <p class="text-[10px] text-gray-500 font-black uppercase mb-2 tracking-widest italic">// Daftar Produk & Info Dasar</p>
+                    <pre class="code-font text-[10px] text-yellow-500/80">
+[
+  { "id": "STR-9281", "nama": "Netflix", "harga": 35000, "variant": "1B", "foto_url": "https://link.com/img.png" },
+  { "id": "STR-4421", "nama": "Disney+", "harga": 25000, "variant": "SHARING", "foto_url": null }
+]</pre>
                 </div>
             </section>
 
@@ -79,27 +88,43 @@
                     <div class="bg-yellow-600 w-1.5 h-6 rounded-full"></div>
                     <h3 class="text-xl font-black text-white uppercase italic tracking-tight">3. Detail Produk Tunggal</h3>
                 </div>
-                <p class="text-gray-500 text-sm mb-4">Ambil informasi lengkap dari satu produk berdasarkan ID spesifik.</p>
-                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 overflow-hidden">
+                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 mb-4">
                     <pre id="codeDetail" class="code-font text-[11px] text-yellow-500 overflow-x-auto">Memuat...</pre>
+                </div>
+                <div class="json-box p-4 rounded-2xl">
+                    <p class="text-[10px] text-gray-500 font-black uppercase mb-2 tracking-widest italic">// Data Lengkap (Termasuk URL Gambar Opsional)</p>
+                    <pre class="code-font text-[10px] text-yellow-500/80">
+{
+  "id": "STR-9281",
+  "nama": "Netflix",
+  "email": "user@mail.com",
+  "pw": "pass123",
+  "link": null,
+  "harga": 35000,
+  "kategori": "STREAMING",
+  "foto_url": "https://link.com/gambar_produk.jpg",
+  "deskripsi": "Garansi 30 Hari"
+}</pre>
                 </div>
             </section>
 
             <section>
                 <div class="flex items-center gap-3 mb-4">
                     <div class="bg-red-600 w-1.5 h-6 rounded-full"></div>
-                    <h3 class="text-xl font-black text-white uppercase italic tracking-tight">4. Hapus Produk (Beli)</h3>
+                    <h3 class="text-xl font-black text-white uppercase italic tracking-tight">4. Delete (Proses Beli)</h3>
                 </div>
-                <p class="text-gray-500 text-sm mb-4">Gunakan perintah DELETE setelah pembayaran diverifikasi sukses.</p>
-                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 overflow-hidden">
+                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 mb-4">
                     <pre id="codeDel" class="code-font text-[11px] text-red-400 overflow-x-auto">Memuat...</pre>
                 </div>
+                <div class="json-box p-4 rounded-2xl">
+                    <p class="text-[10px] text-gray-500 font-black uppercase mb-2 tracking-widest italic">// Status Akhir</p>
+                    <pre class="code-font text-[10px] text-green-500">204 No Content (Berhasil Dihapus)</pre>
+                </div>
             </section>
-
         </div>
 
         <footer class="mt-20 text-center pb-10 border-t border-gray-900 pt-10">
-            <p class="text-[10px] font-black text-gray-700 uppercase tracking-[0.4em]">SNZMART API DOCUMENTATION &copy; 2026</p>
+            <p class="text-[10px] font-black text-gray-700 uppercase tracking-[0.4em]">SNZMART INTEGRATION SYSTEM &copy; 2026</p>
         </footer>
     </div>
 
@@ -115,25 +140,23 @@
             const delBlock = document.getElementById('codeDel');
 
             if (typeof CONFIG !== 'undefined') {
-                katBlock.innerText = `// Ambil kategori unik untuk menu bot
-const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=kategori", {
+                katBlock.innerText = `const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=kategori", {
     headers: { "apikey": "${CONFIG.SB_KEY}", "Authorization": "Bearer ${CONFIG.SB_KEY}" }
 });
-const categories = [...new Set(res.data.map(item => item.kategori))];`;
+const categories = [...new Set(res.data.map(i => i.kategori))];`;
 
-                listBlock.innerText = `// Tampilkan semua produk dalam satu kategori
-const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=id,nama,harga,variant&kategori=eq.\${kategoriTerpilih}", {
+                listBlock.innerText = `// Mengambil id, nama, harga, variant, dan foto_url (opsional)
+const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=id,nama,harga,variant,foto_url&kategori=eq.\${kat}", {
     headers: { "apikey": "${CONFIG.SB_KEY}", "Authorization": "Bearer ${CONFIG.SB_KEY}" }
 });`;
 
-                detailBlock.innerText = `// Ambil detail lengkap 1 produk saja
-const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=*&id=eq.\${targetId}&limit=1", {
+                detailBlock.innerText = `const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=*&id=eq.\${id}&limit=1", {
     headers: { "apikey": "${CONFIG.SB_KEY}", "Authorization": "Bearer ${CONFIG.SB_KEY}" }
 });
-const detail = res.data[0];`;
+const detail = res.data[0];
+// Jika detail.foto_url null, gunakan gambar default di bot lo.`;
 
-                delBlock.innerText = `// Hapus stok dari database
-await axios.delete("${CONFIG.SB_URL}/rest/v1/produk?id=eq.\${id}", {
+                delBlock.innerText = `await axios.delete("${CONFIG.SB_URL}/rest/v1/produk?id=eq.\${id}", {
     headers: { "apikey": "${CONFIG.SB_KEY}", "Authorization": "Bearer ${CONFIG.SB_KEY}" }
 });`;
             }
@@ -141,10 +164,10 @@ await axios.delete("${CONFIG.SB_URL}/rest/v1/produk?id=eq.\${id}", {
 
         async function simulateLogs() {
             const logs = [
-                { t: "analyzing database schema...", c: "text-gray-500" },
-                { t: "mapping category unique filters... done", c: "text-purple-400" },
-                { t: "mapping single product selectors... done", c: "text-yellow-500" },
-                { t: "full api documentation ready", c: "text-green-500 font-bold" }
+                { t: "checking database structure...", c: "text-gray-500" },
+                { t: "mapping foto_url field... detected", c: "text-blue-400" },
+                { t: "generating integration code... ok", c: "text-purple-400" },
+                { t: "api documentation ready", c: "text-green-500 font-bold" }
             ];
             for (let log of logs) {
                 await new Promise(r => setTimeout(r, 600));
