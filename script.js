@@ -36,15 +36,39 @@ function addCategory() {
     });
 }
 
+async function deleteCategory(index, catName) {
+    const ask = await Swal.fire({
+        title: 'Hapus Folder?',
+        text: `Hapus tampilan folder ${catName}? Data di database tetap aman.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        background: '#111827',
+        color: '#fff'
+    });
+    if (ask.isConfirmed) {
+        categories.splice(index, 1);
+        localStorage.setItem('snz_categories', JSON.stringify(categories));
+        if (activeCategory === catName) {
+            activeCategory = "";
+            document.getElementById('productTableBody').innerHTML = '';
+            resetForm();
+        }
+        renderCategories();
+    }
+}
+
 function renderCategories() {
     const list = document.getElementById('categoryList');
     list.innerHTML = '';
-    categories.forEach(cat => {
+    categories.forEach((cat, index) => {
         const isActive = activeCategory === cat;
         list.innerHTML += `
             <div onclick="selectCategory('${cat}')" class="folder-item flex justify-between items-center p-4 bg-[#0b0f1a] border ${isActive ? 'active-folder' : 'border-gray-800'} rounded-2xl cursor-pointer">
                 <div class="flex items-center gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ${isActive ? 'text-blue-500' : 'text-yellow-500'}" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+                    <button onclick="event.stopPropagation(); deleteCategory(${index}, '${cat}')" class="text-gray-600 hover:text-red-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                     <span class="text-[11px] font-black uppercase tracking-tight ${isActive ? 'text-blue-400' : 'text-gray-300'}">${cat}</span>
                 </div>
                 <button onclick="event.stopPropagation(); openEditor('${cat}')" class="text-[9px] bg-blue-600 text-white px-2 py-1 rounded-md font-black italic shadow-lg shadow-blue-600/20">ADD</button>
@@ -74,6 +98,7 @@ function resetForm() {
     document.getElementById('variant').value = '';
     document.getElementById('harga').value = '';
     document.getElementById('stok_produk').value = '';
+    document.getElementById('deskripsi').value = '';
     document.getElementById('bulk_data').value = '';
     document.getElementById('editorForm').classList.add('hidden');
     const btn = document.getElementById('btn_save');
@@ -88,16 +113,13 @@ async function saveProduct() {
     const vari = document.getElementById('variant').value;
     const hrg = document.getElementById('harga').value;
     const stk = document.getElementById('stok_produk').value;
+    const dsk = document.getElementById('deskripsi').value;
     const bulk = document.getElementById('bulk_data').value.trim();
-
     if (!cid || !nama || !hrg) return Swal.fire({ icon: 'warning', title: 'Oops', text: 'ID, Nama, & Harga Wajib Diisi!' });
-
-    const base = { kategori: activeCategory, nama: nama.toUpperCase(), variant: vari, harga: parseInt(hrg), stok: parseInt(stk || 0) };
+    const base = { kategori: activeCategory, nama: nama.toUpperCase(), variant: vari, harga: parseInt(hrg), stok: parseInt(stk || 0), deskripsi: dsk };
     const lines = bulk.split('\n');
-
     try {
         Swal.fire({ title: 'Processing...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
-
         if (!editId) {
             let i = 1;
             for (let line of lines) {
@@ -154,7 +176,6 @@ async function loadData() {
     const table = document.getElementById('productTableBody');
     table.innerHTML = '';
     document.getElementById('productCount').innerText = `${data.length} Akun`;
-
     data.forEach(item => {
         const row = document.createElement('tr');
         row.className = "hover:bg-blue-500/[0.02] transition-all group";
@@ -165,7 +186,7 @@ async function loadData() {
             <td class="p-6">
                 <p class="font-black text-white italic uppercase text-sm">${item.nama}</p>
                 <p class="text-[10px] text-gray-400 font-bold tracking-tight uppercase">${item.variant}</p>
-                <p class="text-[9px] text-gray-600 mt-1 font-mono">${item.email || 'Click Edit to View'}</p>
+                <p class="text-[9px] text-blue-400/80 mt-1 italic">📝 ${item.deskripsi || 'No Description'}</p>
             </td>
             <td class="p-6">
                 <p class="text-green-500 font-black text-sm">Rp${item.harga.toLocaleString()}</p>
@@ -176,8 +197,8 @@ async function loadData() {
             </td>
             <td class="p-6 text-center">
                 <div class="flex gap-2 justify-center opacity-0 group-hover:opacity-100 transition-all">
-                    <button id="edit-${item.id}" class="bg-blue-600/10 text-blue-400 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-all">EDIT</button>
-                    <button onclick="deleteData('${item.id}')" class="bg-red-600/10 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white transition-all">HAPUS</button>
+                    <button id="edit-${item.id}" class="bg-blue-600/10 text-blue-400 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-[10px] font-bold">EDIT</button>
+                    <button onclick="deleteData('${item.id}')" class="bg-red-600/10 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white transition-all text-[10px] font-bold">HAPUS</button>
                 </div>
             </td>
         `;
@@ -196,6 +217,7 @@ function prepareEdit(item) {
     document.getElementById('variant').value = item.variant;
     document.getElementById('harga').value = item.harga;
     document.getElementById('stok_produk').value = item.stok;
+    document.getElementById('deskripsi').value = item.deskripsi || '';
     document.getElementById('bulk_data').value = item.email ? `${item.email}|${item.pw}` : (item.link || "");
     const btn = document.getElementById('btn_save');
     btn.innerText = "UPDATE DATA";
