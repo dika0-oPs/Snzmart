@@ -1,5 +1,16 @@
 const API_URL = `${CONFIG.SB_URL}/rest/v1/produk`;
 
+function handleLogin() {
+    const e = document.getElementById('loginEmail').value;
+    const p = document.getElementById('loginPw').value;
+    if(e === CONFIG.ADMIN_AUTH.email && p === CONFIG.ADMIN_AUTH.pw) {
+        localStorage.setItem('snzmart_token', 'active');
+        window.location.href = 'dashboard.html';
+    } else {
+        Swal.fire({ icon: 'error', title: 'Akses Gagal', text: 'Email atau Password salah!', background: '#111827', color: '#fff' });
+    }
+}
+
 function handleLogout() {
     localStorage.removeItem('snzmart_token');
     window.location.href = 'index.html';
@@ -141,7 +152,7 @@ async function loadData() {
                     <div class="text-[10px] text-blue-500 font-mono">${item.variant || '-'}</div>
                     <div class="text-[9px] text-gray-600 font-mono">${item.id}</div>
                 </td>
-                <td class="p-4 text-xs font-black text-gray-500">${item.kategori}</td>
+                <td class="p-4 text-xs font-black text-gray-500 text-center">${item.kategori}</td>
                 <td class="p-4 text-green-500 font-mono">Rp${parseInt(item.harga).toLocaleString()}</td>
                 <td class="p-4 text-center">
                     <button onclick='prepareEdit(${JSON.stringify(item)})' class="text-blue-400 text-xs font-bold uppercase mx-1">Edit</button>
