@@ -1,24 +1,13 @@
 const API_URL = `${CONFIG.SB_URL}/rest/v1/produk`;
+let categories = JSON.parse(localStorage.getItem('snz_categories')) || [];
+let activeCategory = "";
 
 function updateTime() {
     const now = new Date();
-    const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
     if(document.getElementById('clock')) document.getElementById('clock').innerText = `${hours}:${minutes} ${seconds}`;
-    if(document.getElementById('date')) document.getElementById('date').innerText = now.toLocaleDateString('id-ID', optionsDate).toUpperCase();
-}
-
-function handleLogin() {
-    const e = document.getElementById('loginEmail').value;
-    const p = document.getElementById('loginPw').value;
-    if(e === CONFIG.ADMIN_AUTH.email && p === CONFIG.ADMIN_AUTH.pw) {
-        localStorage.setItem('snzmart_token', 'active');
-        window.location.href = 'dashboard.html';
-    } else {
-        Swal.fire({ icon: 'error', title: 'Akses Ditolak', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
-    }
 }
 
 function handleLogout() {
@@ -26,229 +15,199 @@ function handleLogout() {
     window.location.href = 'index.html';
 }
 
-function checkAuth() {
-    if(!localStorage.getItem('snzmart_token')) {
-        window.location.href = 'index.html';
-    } else {
-        loadData();
-    }
+function addCategory() {
+    Swal.fire({
+        title: 'Buat Folder Baru',
+        input: 'text',
+        inputPlaceholder: 'Contoh: AI CHATGPT',
+        background: '#111827',
+        color: '#fff',
+        confirmButtonColor: '#2563eb',
+        showCancelButton: true
+    }).then((res) => {
+        if (res.value) {
+            const name = res.value.toUpperCase();
+            if(!categories.includes(name)) {
+                categories.push(name);
+                localStorage.setItem('snz_categories', JSON.stringify(categories));
+                renderCategories();
+            }
+        }
+    });
 }
 
-function generateID(kategori) {
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const prefix = kategori.substring(0, 3).replace(/\s/g, '').toUpperCase();
-    return `${prefix}-${randomNum}`;
+function renderCategories() {
+    const list = document.getElementById('categoryList');
+    list.innerHTML = '';
+    categories.forEach(cat => {
+        const isActive = activeCategory === cat;
+        list.innerHTML += `
+            <div onclick="selectCategory('${cat}')" class="folder-item flex justify-between items-center p-4 bg-[#0b0f1a] border ${isActive ? 'active-folder' : 'border-gray-800'} rounded-2xl cursor-pointer">
+                <div class="flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ${isActive ? 'text-blue-500' : 'text-yellow-500'}" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+                    <span class="text-[11px] font-black uppercase tracking-tight ${isActive ? 'text-blue-400' : 'text-gray-300'}">${cat}</span>
+                </div>
+                <button onclick="event.stopPropagation(); openEditor('${cat}')" class="text-[9px] bg-blue-600 text-white px-2 py-1 rounded-md font-black italic shadow-lg shadow-blue-600/20">ADD</button>
+            </div>
+        `;
+    });
 }
 
-function prepareEdit(item) {
-    document.getElementById('edit_id').value = item.id;
-    document.getElementById('kat').value = item.kategori;
-    document.getElementById('nama').value = item.nama;
-    document.getElementById('variant').value = item.variant || '';
-    document.getElementById('harga').value = item.harga;
-    document.getElementById('foto_url').value = item.foto_url || '';
-    document.getElementById('deskripsi').value = item.deskripsi;
-    
-    let currentData = "";
-    if (item.email && item.pw) {
-        currentData = `${item.email}|${item.pw}`;
-    } else if (item.link) {
-        currentData = item.link;
-    }
-    
-    document.getElementById('bulk_data').value = currentData;
-    const btnSave = document.getElementById('btn_save');
-    btnSave.innerText = "PERBARUI DATA";
-    btnSave.classList.replace('bg-blue-600', 'bg-green-600');
+function selectCategory(cat) {
+    activeCategory = cat;
+    renderCategories();
+    loadData();
+}
+
+function openEditor(cat) {
+    activeCategory = cat;
+    document.getElementById('editorForm').classList.remove('hidden');
+    document.getElementById('currentFolderName').innerText = cat;
     document.getElementById('btn_cancel').classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    renderCategories();
 }
 
 function resetForm() {
     document.getElementById('edit_id').value = '';
+    document.getElementById('custom_id').value = '';
     document.getElementById('nama').value = '';
     document.getElementById('variant').value = '';
     document.getElementById('harga').value = '';
-    document.getElementById('foto_url').value = '';
-    document.getElementById('deskripsi').value = '';
+    document.getElementById('stok_produk').value = '';
     document.getElementById('bulk_data').value = '';
-    const btnSave = document.getElementById('btn_save');
-    btnSave.innerText = "SIMPAN KE SISTEM";
-    btnSave.classList.replace('bg-green-600', 'bg-blue-600');
-    document.getElementById('btn_cancel').classList.add('hidden');
+    document.getElementById('editorForm').classList.add('hidden');
+    const btn = document.getElementById('btn_save');
+    btn.innerText = "SIMPAN KE SISTEM";
+    btn.classList.replace('bg-green-600', 'bg-blue-600');
 }
 
 async function saveProduct() {
     const editId = document.getElementById('edit_id').value;
-    const kat = document.getElementById('kat').value;
+    const cid = document.getElementById('custom_id').value.trim().toLowerCase();
     const nama = document.getElementById('nama').value;
-    const harga = document.getElementById('harga').value;
-    const fUrl = document.getElementById('foto_url').value;
-    const bulkInput = document.getElementById('bulk_data').value.trim();
+    const vari = document.getElementById('variant').value;
+    const hrg = document.getElementById('harga').value;
+    const stk = document.getElementById('stok_produk').value;
+    const bulk = document.getElementById('bulk_data').value.trim();
 
-    if (!kat || kat === "") {
-        return Swal.fire({ icon: 'warning', title: 'Kategori Kosong', text: 'Pilih kategori produk terlebih dahulu!', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
-    }
-    if (!nama || !harga || !bulkInput) {
-        return Swal.fire({ icon: 'warning', title: 'Data Tidak Lengkap', text: 'Nama, Harga, dan Data Bulk wajib diisi!', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
-    }
+    if (!cid || !nama || !hrg) return Swal.fire({ icon: 'warning', title: 'Oops', text: 'ID, Nama, & Harga Wajib Diisi!' });
 
-    const basePayload = {
-        kategori: kat,
-        nama: nama,
-        variant: document.getElementById('variant').value,
-        harga: parseInt(harga),
-        foto_url: fUrl,
-        deskripsi: document.getElementById('deskripsi').value
-    };
-
-    const lines = bulkInput.split('\n');
+    const base = { kategori: activeCategory, nama: nama.toUpperCase(), variant: vari, harga: parseInt(hrg), stok: parseInt(stk || 0) };
+    const lines = bulk.split('\n');
 
     try {
-        Swal.fire({ title: 'Memproses...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Processing...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
 
         if (!editId) {
+            let i = 1;
             for (let line of lines) {
-                const currentLine = line.trim();
-                if (!currentLine) continue;
-                
-                const payload = { ...basePayload, id: generateID(kat) };
-                if (currentLine.includes('|')) {
-                    const parts = currentLine.split('|');
-                    payload.email = parts[0].trim();
-                    payload.pw = parts[1].trim();
-                    payload.link = null;
+                const curLine = line.trim();
+                if (!curLine) continue;
+                const finalId = lines.length > 1 ? `${cid}-${i}` : cid;
+                const payload = { ...base, id: finalId };
+                if (curLine.includes('|')) {
+                    const p = curLine.split('|');
+                    payload.email = p[0].trim();
+                    payload.pw = p[1].trim();
                 } else {
-                    payload.link = currentLine;
-                    payload.email = null;
-                    payload.pw = null;
+                    payload.link = curLine;
                 }
-
-                const res = await fetch(API_URL, {
+                await fetch(API_URL, {
                     method: 'POST',
-                    headers: { 
-                        'apikey': CONFIG.SB_KEY, 
-                        'Authorization': `Bearer ${CONFIG.SB_KEY}`, 
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=minimal'
-                    },
+                    headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                if (!res.ok) throw new Error('Gagal menyimpan beberapa data.');
+                i++;
             }
         } else {
-            const payload = { ...basePayload };
-            const singleLine = lines[0].trim();
-            if (singleLine.includes('|')) {
-                const parts = singleLine.split('|');
-                payload.email = parts[0].trim();
-                payload.pw = parts[1].trim();
+            const payload = { ...base, id: cid };
+            const l = lines[0].trim();
+            if (l.includes('|')) {
+                const p = l.split('|');
+                payload.email = p[0].trim();
+                payload.pw = p[1].trim();
                 payload.link = null;
             } else {
-                payload.link = singleLine;
-                payload.email = null;
-                payload.pw = null;
+                payload.link = l;
+                payload.email = null; payload.pw = null;
             }
-
-            const res = await fetch(`${API_URL}?id=eq.${editId}`, {
+            await fetch(`${API_URL}?id=eq.${editId}`, {
                 method: 'PATCH',
-                headers: { 
-                    'apikey': CONFIG.SB_KEY, 
-                    'Authorization': `Bearer ${CONFIG.SB_KEY}`, 
-                    'Content-Type': 'application/json' 
-                },
+                headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            if (!res.ok) throw new Error('Gagal memperbarui data.');
         }
-
-        Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Inventori SNZMART telah diperbarui!', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
+        Swal.fire({ icon: 'success', title: 'Success', background: '#111827', color: '#fff' });
         resetForm();
         loadData();
-    } catch (error) {
-        Swal.fire({ icon: 'error', title: 'Kesalahan Sistem', text: error.message, background: '#111827', color: '#fff' });
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Error', text: e.message });
     }
 }
 
 async function loadData() {
-    try {
-        const res = await fetch(`${API_URL}?select=*&order=kategori.asc,nama.asc`, {
-            headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
-        });
-        const data = await res.json();
-        const table = document.getElementById('productTableBody');
-        const countLabel = document.getElementById('productCount');
-        
-        if(!table) return;
-        table.innerHTML = '';
-        if(countLabel) countLabel.innerText = `${data.length} Produk`;
-        
-        data.forEach(item => {
-            const row = document.createElement('tr');
-            row.className = "hover:bg-blue-500/[0.02] transition-all group";
-            row.innerHTML = `
-                <td class="p-6">
-                    <div class="flex items-center gap-4">
-                        <div class="relative overflow-hidden w-10 h-10 rounded-lg border border-gray-800 bg-gray-900 flex-shrink-0">
-                            <img src="${item.foto_url || 'https://via.placeholder.com/100?text=SNZ'}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-[9px] font-black text-blue-500 uppercase tracking-tighter mb-0.5">${item.kategori}</span>
-                            <span class="text-sm font-bold text-white uppercase tracking-tight">${item.nama}</span>
-                            <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Varian: ${item.variant || '-'}</span>
-                        </div>
-                    </div>
-                </td>
-                <td class="p-6">
-                    <div class="text-green-500 font-black font-mono text-sm">Rp${parseInt(item.harga).toLocaleString()}</div>
-                    <span class="text-[8px] text-gray-600 font-mono italic uppercase">#${item.id}</span>
-                </td>
-                <td class="p-6 text-center">
-                    <div class="flex items-center justify-center gap-3">
-                        <button id="edit-${item.id}" class="bg-blue-600/10 text-blue-400 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        </button>
-                        <button onclick="deleteData('${item.id}')" class="bg-red-600/10 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                    </div>
-                </td>
-            `;
-            table.appendChild(row);
-            document.getElementById(`edit-${item.id}`).onclick = () => prepareEdit(item);
-        });
-    } catch (error) {
-        console.error("Load Error:", error);
-    }
+    if (!activeCategory) return;
+    const res = await fetch(`${API_URL}?kategori=eq.${activeCategory}&order=id.asc`, {
+        headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
+    });
+    const data = await res.json();
+    const table = document.getElementById('productTableBody');
+    table.innerHTML = '';
+    document.getElementById('productCount').innerText = `${data.length} Akun`;
+
+    data.forEach(item => {
+        const row = document.createElement('tr');
+        row.className = "hover:bg-blue-500/[0.02] transition-all group";
+        row.innerHTML = `
+            <td class="p-6">
+                <span class="text-blue-500 font-black text-[11px] tracking-widest uppercase italic font-mono">🔐 ${item.id}</span>
+            </td>
+            <td class="p-6">
+                <p class="font-black text-white italic uppercase text-sm">${item.nama}</p>
+                <p class="text-[10px] text-gray-400 font-bold tracking-tight uppercase">${item.variant}</p>
+                <p class="text-[9px] text-gray-600 mt-1 font-mono">${item.email || 'Click Edit to View'}</p>
+            </td>
+            <td class="p-6">
+                <p class="text-green-500 font-black text-sm">Rp${item.harga.toLocaleString()}</p>
+                <div class="flex gap-2 mt-1">
+                    <span class="text-[9px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded border border-gray-700">STOK: ${item.stok}</span>
+                    <span class="text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">SOLD: ${item.terjual || 0}</span>
+                </div>
+            </td>
+            <td class="p-6 text-center">
+                <div class="flex gap-2 justify-center opacity-0 group-hover:opacity-100 transition-all">
+                    <button id="edit-${item.id}" class="bg-blue-600/10 text-blue-400 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-all">EDIT</button>
+                    <button onclick="deleteData('${item.id}')" class="bg-red-600/10 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white transition-all">HAPUS</button>
+                </div>
+            </td>
+        `;
+        table.appendChild(row);
+        document.getElementById(`edit-${item.id}`).onclick = () => prepareEdit(item);
+    });
+}
+
+function prepareEdit(item) {
+    activeCategory = item.kategori;
+    document.getElementById('editorForm').classList.remove('hidden');
+    document.getElementById('currentFolderName').innerText = item.kategori;
+    document.getElementById('edit_id').value = item.id;
+    document.getElementById('custom_id').value = item.id;
+    document.getElementById('nama').value = item.nama;
+    document.getElementById('variant').value = item.variant;
+    document.getElementById('harga').value = item.harga;
+    document.getElementById('stok_produk').value = item.stok;
+    document.getElementById('bulk_data').value = item.email ? `${item.email}|${item.pw}` : (item.link || "");
+    const btn = document.getElementById('btn_save');
+    btn.innerText = "UPDATE DATA";
+    btn.classList.replace('bg-blue-600', 'bg-green-600');
+    document.getElementById('btn_cancel').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function deleteData(id) {
-    const ask = await Swal.fire({ 
-        title: 'Hapus Produk?', 
-        text: `ID: ${id}`, 
-        icon: 'warning', 
-        background: '#111827', 
-        color: '#fff', 
-        showCancelButton: true, 
-        confirmButtonColor: '#ef4444', 
-        cancelButtonColor: '#1f2937', 
-        confirmButtonText: 'Ya, Hapus', 
-        cancelButtonText: 'Batal' 
-    });
-    
+    const ask = await Swal.fire({ title: 'Hapus?', text: `ID: ${id}`, icon: 'warning', showCancelButton: true, background: '#111827', color: '#fff' });
     if(ask.isConfirmed) {
-        try {
-            const res = await fetch(`${API_URL}?id=eq.${id}`, {
-                method: 'DELETE',
-                headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
-            });
-            if (!res.ok) throw new Error('Gagal menghapus data.');
-            loadData();
-        } catch (error) {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: error.message, background: '#111827', color: '#fff' });
-        }
+        await fetch(`${API_URL}?id=eq.${id}`, { method: 'DELETE', headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` } });
+        loadData();
     }
 }
-
-setInterval(updateTime, 1000);
-updateTime();
