@@ -25,7 +25,7 @@
         <div class="flex items-center gap-8">
             <div class="hidden md:flex flex-col items-end">
                 <div id="clock" class="digital-clock text-xl font-bold text-blue-500 tracking-widest">00:00 00</div>
-                <div id="date" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">KAMIS, 19 FEBRUARI 2026</div>
+                <div id="date" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">MEMUAT...</div>
             </div>
             <div class="flex gap-6 items-center text-[10px] font-bold uppercase tracking-widest border-l border-gray-800 pl-8">
                 <a href="dashboard.html" class="text-blue-500">Inventori</a>
@@ -48,8 +48,8 @@
                         <input type="hidden" id="edit_id">
                         
                         <div>
-                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Kategori Utama</label>
-                            <select id="kat" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 transition-all appearance-none text-blue-400 font-bold">
+                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Kategori</label>
+                            <select id="kat" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 transition-all text-blue-400 font-bold">
                                 <option value="AKUN">AKUN</option>
                                 <option value="APP PREMIUM">APP PREMIUM</option>
                                 <option value="STREAMING">STREAMING</option>
@@ -68,7 +68,7 @@
                             </div>
                             <div>
                                 <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Varian</label>
-                                <input type="text" id="variant" placeholder="cth: 2U / 1 Bulan" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500">
+                                <input type="text" id="variant" placeholder="cth: 2U" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500">
                             </div>
                         </div>
 
@@ -76,14 +76,19 @@
                             <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Harga (IDR)</label>
                             <input type="number" id="harga" placeholder="0" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 font-mono text-green-500">
                         </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Link Foto (Opsional)</label>
+                            <input type="text" id="foto_url" placeholder="https://image.com/foto.jpg" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500">
+                        </div>
                         
                         <div>
                             <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase font-black">Input Data Bulk</label>
-                            <textarea id="bulk_data" placeholder="Format:&#10;data1|pass1&#10;data2|pass2" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 h-32 outline-none font-mono text-xs focus:border-blue-500"></textarea>
+                            <textarea id="bulk_data" placeholder="data1|pass1&#10;Atau Link/Kode" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 h-28 outline-none font-mono text-xs focus:border-blue-500"></textarea>
                         </div>
 
                         <div>
-                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Deskripsi Tambahan</label>
+                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Deskripsi</label>
                             <textarea id="deskripsi" placeholder="Catatan kecil..." class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 h-20 outline-none focus:border-blue-500"></textarea>
                         </div>
                         
@@ -105,9 +110,9 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="text-gray-500 text-[10px] uppercase font-black border-b border-gray-800">
-                                    <th class="p-6">Struktur Produk</th>
+                                    <th class="p-6">Produk & Varian</th>
                                     <th class="p-6">Harga</th>
-                                    <th class="p-6 text-center">Kelola</th>
+                                    <th class="p-6 text-center">Tindakan</th>
                                 </tr>
                             </thead>
                             <tbody id="productTableBody" class="text-sm divide-y divide-gray-800/50"></tbody>
