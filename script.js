@@ -3,13 +3,11 @@ const API_URL = `${CONFIG.SB_URL}/rest/v1/produk`;
 function updateTime() {
     const now = new Date();
     const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
-    
-    document.getElementById('clock').innerText = `${hours}:${minutes} ${seconds}`;
-    document.getElementById('date').innerText = now.toLocaleDateString('id-ID', optionsDate).toUpperCase();
+    if(document.getElementById('clock')) document.getElementById('clock').innerText = `${hours}:${minutes} ${seconds}`;
+    if(document.getElementById('date')) document.getElementById('date').innerText = now.toLocaleDateString('id-ID', optionsDate).toUpperCase();
 }
 
 function handleLogin() {
@@ -19,7 +17,7 @@ function handleLogin() {
         localStorage.setItem('snzmart_token', 'active');
         window.location.href = 'dashboard.html';
     } else {
-        Swal.fire({ icon: 'error', title: 'Akses Ditolak', text: 'Email atau password salah!', background: '#111827', color: '#fff' });
+        Swal.fire({ icon: 'error', title: 'Akses Ditolak', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
     }
 }
 
@@ -39,36 +37,18 @@ function generateID(kategori) {
     return `${prefix}-${randomNum}`;
 }
 
-async function uploadImage(file) {
-    const fileName = `${Date.now()}_${file.name}`;
-    const uploadPath = `${CONFIG.SB_URL}/storage/v1/object/${CONFIG.BUCKET_NAME}/${fileName}`;
-    const publicUrl = `${CONFIG.SB_URL}/storage/v1/object/public/${CONFIG.BUCKET_NAME}/${fileName}`;
-    const res = await fetch(uploadPath, {
-        method: 'POST',
-        headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` },
-        body: file
-    });
-    return res.ok ? publicUrl : null;
-}
-
 function prepareEdit(item) {
     document.getElementById('edit_id').value = item.id;
     document.getElementById('kat').value = item.kategori;
     document.getElementById('nama').value = item.nama;
     document.getElementById('variant').value = item.variant || '';
     document.getElementById('harga').value = item.harga;
+    document.getElementById('foto_url').value = item.foto_url || '';
     document.getElementById('deskripsi').value = item.deskripsi;
-    
-    let currentData = "";
-    if (item.email && item.pw) {
-        currentData = `${item.email}|${item.pw}`;
-    } else {
-        currentData = item.link || '';
-    }
+    let currentData = (item.email && item.pw) ? `${item.email}|${item.pw}` : (item.link || '');
     document.getElementById('bulk_data').value = currentData;
-    
     const btnSave = document.getElementById('btn_save');
-    btnSave.innerText = "PERBARUI PRODUK";
+    btnSave.innerText = "PERBARUI DATA";
     btnSave.classList.replace('bg-blue-600', 'bg-green-600');
     document.getElementById('btn_cancel').classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -79,6 +59,7 @@ function resetForm() {
     document.getElementById('nama').value = '';
     document.getElementById('variant').value = '';
     document.getElementById('harga').value = '';
+    document.getElementById('foto_url').value = '';
     document.getElementById('deskripsi').value = '';
     document.getElementById('bulk_data').value = '';
     const btnSave = document.getElementById('btn_save');
@@ -89,18 +70,17 @@ function resetForm() {
 
 async function saveProduct() {
     const editId = document.getElementById('edit_id').value;
-    const fileInput = document.getElementById('foto_file');
     const kat = document.getElementById('kat').value;
     const nama = document.getElementById('nama').value;
     const harga = document.getElementById('harga').value;
+    const fUrl = document.getElementById('foto_url').value;
     const bulkInput = document.getElementById('bulk_data').value.trim();
 
-    if (!nama || !harga || !bulkInput) return Swal.fire('Error', 'Lengkapi data produk!', 'error');
-
-    let imgUrl = "";
-    if (fileInput && fileInput.files.length > 0) {
-        Swal.fire({ title: 'Mengunggah Gambar...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
-        imgUrl = await uploadImage(fileInput.files[0]);
+    if (!kat || kat === "") {
+        return Swal.fire({ icon: 'warning', title: 'Kategori Kosong', text: 'Pilih kategori produk terlebih dahulu!', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
+    }
+    if (!nama || !harga || !bulkInput) {
+        return Swal.fire({ icon: 'warning', title: 'Data Tidak Lengkap', text: 'Nama, Harga, dan Data Bulk wajib diisi!', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
     }
 
     const basePayload = {
@@ -108,15 +88,14 @@ async function saveProduct() {
         nama: nama,
         variant: document.getElementById('variant').value,
         harga: parseInt(harga),
+        foto_url: fUrl,
         deskripsi: document.getElementById('deskripsi').value
     };
-
-    if (imgUrl) basePayload.foto_url = imgUrl;
 
     const lines = bulkInput.split('\n');
 
     if (!editId) {
-        Swal.fire({ title: 'Memproses Data...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Memproses...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
         for (let line of lines) {
             const currentLine = line.trim();
             if (!currentLine) continue;
@@ -154,7 +133,7 @@ async function saveProduct() {
         });
     }
 
-    Swal.fire('Berhasil', 'Inventori telah diperbarui', 'success');
+    Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Inventori SNZMART telah diperbarui!', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
     resetForm();
     loadData();
 }
@@ -172,26 +151,29 @@ async function loadData() {
     
     data.forEach(item => {
         table.innerHTML += `
-            <tr class="hover:bg-blue-500/[0.02] transition-all">
+            <tr class="hover:bg-blue-500/[0.02] transition-all group">
                 <td class="p-6">
-                    <div class="flex flex-col">
-                        <span class="text-[9px] font-black text-blue-500 uppercase tracking-tighter mb-1">${item.kategori}</span>
-                        <span class="text-base font-bold text-white uppercase tracking-tight">${item.nama}</span>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="bg-gray-800 text-gray-400 text-[9px] px-2 py-0.5 rounded-md font-bold border border-gray-700">VAR: ${item.variant || 'STANDARD'}</span>
-                            <span class="text-[9px] text-gray-600 font-mono">#${item.id}</span>
+                    <div class="flex items-center gap-4">
+                        <div class="relative overflow-hidden w-10 h-10 rounded-lg border border-gray-800 bg-gray-900 flex-shrink-0">
+                            <img src="${item.foto_url || 'https://via.placeholder.com/100?text=SNZ'}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-black text-blue-500 uppercase tracking-tighter mb-0.5">${item.kategori}</span>
+                            <span class="text-sm font-bold text-white uppercase tracking-tight">${item.nama}</span>
+                            <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Varian: ${item.variant || '-'}</span>
                         </div>
                     </div>
                 </td>
                 <td class="p-6">
-                    <div class="text-green-500 font-black font-mono text-base">Rp${parseInt(item.harga).toLocaleString()}</div>
+                    <div class="text-green-500 font-black font-mono text-sm">Rp${parseInt(item.harga).toLocaleString()}</div>
+                    <span class="text-[8px] text-gray-600 font-mono italic uppercase">#${item.id}</span>
                 </td>
                 <td class="p-6 text-center">
-                    <div class="flex items-center justify-center gap-4">
-                        <button onclick='prepareEdit(${JSON.stringify(item)})' class="bg-blue-500/10 text-blue-500 p-2 rounded-xl hover:bg-blue-500 hover:text-white transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                    <div class="flex items-center justify-center gap-3">
+                        <button onclick='prepareEdit(${JSON.stringify(item)})' class="bg-blue-600/10 text-blue-400 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                         </button>
-                        <button onclick="deleteData('${item.id}')" class="bg-red-500/10 text-red-500 p-2 rounded-xl hover:bg-red-500 hover:text-white transition-all">
+                        <button onclick="deleteData('${item.id}')" class="bg-red-600/10 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white transition-all">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </div>
@@ -202,7 +184,7 @@ async function loadData() {
 }
 
 async function deleteData(id) {
-    const ask = await Swal.fire({ title: 'Hapus Produk?', text: `ID: ${id}`, icon: 'warning', background: '#111827', color: '#fff', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Ya, Hapus!', cancelButtonText: 'Batal' });
+    const ask = await Swal.fire({ title: 'Hapus Produk?', text: `ID: ${id}`, icon: 'warning', background: '#111827', color: '#fff', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#1f2937', confirmButtonText: 'Ya, Hapus', cancelButtonText: 'Batal' });
     if(ask.isConfirmed) {
         await fetch(`${API_URL}?id=eq.${id}`, {
             method: 'DELETE',
