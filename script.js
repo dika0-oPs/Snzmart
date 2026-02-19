@@ -1,7 +1,23 @@
 const checkAuth = () => {
     const session = localStorage.getItem("snzmart_session");
-    if (!session && !window.location.href.includes("index.html")) {
+    const isLoginPage = window.location.pathname.endsWith("index.html") || window.location.pathname === "/";
+    if (!session && !isLoginPage) {
         window.location.href = "index.html";
+    }
+    if (session && isLoginPage) {
+        window.location.href = "dashboard.html";
+    }
+};
+
+const handleLogin = (e) => {
+    e.preventDefault();
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
+    if (user === "admin" && pass === "admin") {
+        localStorage.setItem("snzmart_session", "active");
+        window.location.href = "dashboard.html";
+    } else {
+        alert("Username atau Password salah!");
     }
 };
 
@@ -13,10 +29,10 @@ const handleLogout = () => {
 const updateTime = () => {
     const now = new Date();
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    if (document.getElementById('clock')) {
-        document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
-        document.getElementById('date').textContent = now.toLocaleDateString('id-ID', options);
-    }
+    const clockEl = document.getElementById('clock');
+    const dateEl = document.getElementById('date');
+    if (clockEl) clockEl.textContent = now.toLocaleTimeString('en-US', { hour12: false });
+    if (dateEl) dateEl.textContent = now.toLocaleDateString('id-ID', options);
 };
 
 async function loadData() {
@@ -60,8 +76,7 @@ async function loadData() {
                             </svg>
                         </button>
                     </td>
-                </tr>
-            `;
+                </tr>`;
             tableBody.insertAdjacentHTML('beforeend', row);
         });
     } catch (err) {
@@ -72,9 +87,7 @@ async function loadData() {
 async function saveProduct(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = 'Memproses...';
     const payload = {
         id: document.getElementById('p_id').value,
         nama: document.getElementById('p_nama').value,
@@ -103,13 +116,12 @@ async function saveProduct(e) {
             window.location.reload();
         } else {
             const errorData = await res.json();
-            alert('Gagal menyimpan: ' + (errorData.message || 'Cek SQL Policy Supabase'));
+            alert('Gagal: ' + errorData.message);
         }
     } catch (err) {
         alert('Terjadi kesalahan jaringan!');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = originalText;
     }
 }
 
@@ -123,11 +135,7 @@ async function deleteProduct(id) {
                 'Authorization': `Bearer ${CONFIG.SB_KEY}`
             }
         });
-        if (res.ok) {
-            loadData();
-        } else {
-            alert('Gagal menghapus produk. Pastikan Policy DELETE aktif.');
-        }
+        if (res.ok) loadData();
     } catch (err) {
         console.error(err);
     }
@@ -137,9 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     updateTime();
     setInterval(updateTime, 1000);
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
     const pForm = document.getElementById('productForm');
-    if (pForm) {
-        pForm.addEventListener('submit', saveProduct);
-    }
+    if (pForm) pForm.addEventListener('submit', saveProduct);
     loadData();
 });
