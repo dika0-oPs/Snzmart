@@ -13,6 +13,9 @@
         ::-webkit-scrollbar-track { background: #0b0f1a; }
         ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 10px; }
         .digital-clock { font-family: 'Courier New', Courier, monospace; }
+        .folder-item { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .folder-item:hover { background: rgba(37, 99, 235, 0.1); transform: translateX(5px); }
+        .active-folder { border-color: #2563eb; background: rgba(37, 99, 235, 0.05); }
     </style>
 </head>
 <body class="bg-[#0b0f1a] text-gray-100">
@@ -21,17 +24,9 @@
             <div class="w-3 h-3 bg-blue-600 rounded-full shadow-[0_0_15px_#2563eb]"></div>
             <h1 class="text-2xl font-black tracking-tighter text-white uppercase italic">SNZMART</h1>
         </div>
-        
         <div class="flex items-center gap-8">
-            <div class="hidden md:flex flex-col items-end">
-                <div id="clock" class="digital-clock text-xl font-bold text-blue-500 tracking-widest">00:00 00</div>
-                <div id="date" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">MEMUAT...</div>
-            </div>
-            <div class="flex gap-6 items-center text-[10px] font-bold uppercase tracking-widest border-l border-gray-800 pl-8">
-                <a href="dashboard.html" class="text-blue-500">Inventori</a>
-                <a href="docs.html" class="text-gray-400 hover:text-white transition">Dokumentasi</a>
-                <button onclick="handleLogout()" class="bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all">Keluar</button>
-            </div>
+            <div id="clock" class="digital-clock text-xl font-bold text-blue-500 tracking-widest hidden md:block">00:00 00</div>
+            <button onclick="handleLogout()" class="bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Keluar</button>
         </div>
     </nav>
 
@@ -39,83 +34,84 @@
         <div class="grid lg:grid-cols-12 gap-8">
             <div class="lg:col-span-4">
                 <div class="bg-[#111827] p-6 rounded-[2rem] border border-gray-800 shadow-2xl sticky top-24">
-                    <div class="mb-6 border-l-4 border-blue-600 pl-4">
-                        <h3 class="text-sm font-black text-white uppercase tracking-widest">Editor Produk</h3>
-                        <p class="text-[10px] text-gray-500 uppercase mt-1">Kontrol Inventori SNZMART</p>
+                    <div class="mb-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-sm font-black text-white uppercase tracking-widest italic">📂 Folder Kategori</h3>
+                            <p class="text-[9px] text-gray-500 uppercase mt-1 italic font-bold">Pencet 'ADD' untuk isi produk</p>
+                        </div>
+                        <button onclick="addCategory()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-black transition-all">+ NEW</button>
                     </div>
                     
-                    <div class="space-y-4 text-sm">
+                    <div id="categoryList" class="space-y-2 mb-6 max-h-[250px] overflow-y-auto pr-2"></div>
+
+                    <div id="editorForm" class="hidden pt-6 border-t border-gray-800 space-y-4">
+                        <div class="bg-blue-600/10 p-3 rounded-xl border border-blue-600/20">
+                            <p class="text-[9px] font-bold text-blue-500 uppercase">Input Di Folder:</p>
+                            <p id="currentFolderName" class="text-white font-black uppercase italic text-sm"></p>
+                        </div>
+
                         <input type="hidden" id="edit_id">
-                        
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] font-bold text-blue-500 ml-1 mb-1 block uppercase italic">ID Custom (Kode)</label>
+                                <input type="text" id="custom_id" placeholder="cth: gptm" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 font-bold text-white uppercase">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 ml-1 mb-1 block uppercase">Nama Produk</label>
+                                <input type="text" id="nama" placeholder="cth: AI CHATGPT" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 uppercase">
+                            </div>
+                        </div>
+
                         <div>
-                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Kategori</label>
-                            <select id="kat" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 transition-all text-blue-400 font-bold">
-                                <option value="AKUN">AKUN</option>
-                                <option value="APP PREMIUM">APP PREMIUM</option>
-                                <option value="STREAMING">STREAMING</option>
-                                <option value="GAME">GAME</option>
-                                <option value="TOOLS">TOOLS</option>
-                                <option value="VOUCHER">VOUCHER</option>
-                                <option value="JASA">JASA</option>
-                                <option value="ITEM">ITEM</option>
-                            </select>
+                            <label class="text-[10px] font-bold text-gray-500 ml-1 mb-1 block uppercase">Varian Paket</label>
+                            <input type="text" id="variant" placeholder="cth: BUSINESS MEMBER 1 BULAN" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500">
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Nama Produk</label>
-                                <input type="text" id="nama" placeholder="cth: Netflix" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500">
+                                <label class="text-[10px] font-bold text-gray-500 ml-1 mb-1 block uppercase">Harga (IDR)</label>
+                                <input type="number" id="harga" placeholder="0" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 font-mono text-green-500">
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Varian</label>
-                                <input type="text" id="variant" placeholder="cth: 2U" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500">
+                                <label class="text-[10px] font-bold text-gray-500 ml-1 mb-1 block uppercase">Stok Awal</label>
+                                <input type="number" id="stok_produk" placeholder="0" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 font-mono">
                             </div>
                         </div>
 
                         <div>
-                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Harga (IDR)</label>
-                            <input type="number" id="harga" placeholder="0" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 font-mono text-green-500">
+                            <label class="text-[10px] font-bold text-gray-500 ml-1 mb-1 block uppercase">Data Akun (Email|Pass)</label>
+                            <textarea id="bulk_data" placeholder="user1|pass1&#10;user2|pass2" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 h-24 outline-none font-mono text-xs focus:border-blue-500"></textarea>
                         </div>
 
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Link Foto (Opsional)</label>
-                            <input type="text" id="foto_url" placeholder="https://image.com/foto.jpg" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500">
-                        </div>
-                        
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase font-black">Input Data Bulk</label>
-                            <textarea id="bulk_data" placeholder="data1|pass1&#10;Atau Link/Kode" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 h-28 outline-none font-mono text-xs focus:border-blue-500"></textarea>
-                        </div>
-
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Deskripsi</label>
-                            <textarea id="deskripsi" placeholder="Catatan kecil..." class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 h-20 outline-none focus:border-blue-500"></textarea>
-                        </div>
-                        
                         <div class="pt-2">
-                            <button id="btn_save" onclick="saveProduct()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-black transition-all shadow-lg shadow-blue-500/20 active:scale-95 text-xs uppercase tracking-widest">Simpan ke Sistem</button>
-                            <button id="btn_cancel" onclick="resetForm()" class="hidden w-full mt-2 bg-gray-800 p-4 rounded-2xl font-black text-gray-400 border border-gray-700 text-xs uppercase tracking-widest">Batalkan Edit</button>
+                            <button id="btn_save" onclick="saveProduct()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-blue-500/20">SIMPAN KE SISTEM</button>
+                            <button id="btn_cancel" onclick="resetForm()" class="hidden w-full mt-2 bg-gray-800 p-4 rounded-2xl font-black text-gray-400 border border-gray-700 text-[10px] uppercase tracking-widest">BATALKAN</button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-8">
-                <div class="bg-[#111827] rounded-[2rem] border border-gray-800 shadow-2xl overflow-hidden">
+                <div class="bg-[#111827] rounded-[2rem] border border-gray-800 shadow-2xl overflow-hidden min-h-[600px]">
                     <div class="p-6 border-b border-gray-800 bg-[#111827]/50 flex justify-between items-center">
-                        <h3 class="text-sm font-black text-white uppercase tracking-widest">Daftar Inventori</h3>
-                        <div class="text-[10px] bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full border border-blue-500/20 font-bold" id="productCount">0 Produk</div>
+                        <div class="flex items-center gap-4">
+                            <h3 class="text-sm font-black text-white uppercase tracking-widest italic">📦 List Varian</h3>
+                            <input type="text" id="search_id" onkeyup="searchTable()" placeholder="Cari ID/Nama..." class="bg-[#0b0f1a] border border-gray-800 rounded-xl px-4 py-2 text-[10px] outline-none focus:border-blue-500 w-48">
+                        </div>
+                        <div class="text-[10px] bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full border border-blue-500/20 font-bold" id="productCount">0 Akun</div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full text-left border-collapse" id="mainTable">
                             <thead>
                                 <tr class="text-gray-500 text-[10px] uppercase font-black border-b border-gray-800">
-                                    <th class="p-6">Produk & Varian</th>
-                                    <th class="p-6">Harga</th>
-                                    <th class="p-6 text-center">Tindakan</th>
+                                    <th class="p-6">ID / Kode Bot</th>
+                                    <th class="p-6">Detail Produk</th>
+                                    <th class="p-6">Harga & Stok</th>
+                                    <th class="p-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="productTableBody" class="text-sm divide-y divide-gray-800/50"></tbody>
+                            <tbody id="productTableBody" class="text-xs divide-y divide-gray-800/50"></tbody>
                         </table>
                     </div>
                 </div>
@@ -127,10 +123,25 @@
     <script src="script.js"></script>
     <script>
         window.onload = () => {
-            checkAuth();
+            if(!localStorage.getItem('snzmart_token')) window.location.href = 'index.html';
             updateTime();
             setInterval(updateTime, 1000);
+            renderCategories();
         };
+
+        function searchTable() {
+            let input = document.getElementById("search_id").value.toUpperCase();
+            let tr = document.getElementById("productTableBody").getElementsByTagName("tr");
+            for (let i = 0; i < tr.length; i++) {
+                let tdId = tr[i].getElementsByTagName("td")[0];
+                let tdNama = tr[i].getElementsByTagName("td")[1];
+                if (tdId || tdNama) {
+                    let txtId = tdId.textContent || tdId.innerText;
+                    let txtNama = tdNama.textContent || tdNama.innerText;
+                    tr[i].style.display = (txtId.toUpperCase().indexOf(input) > -1 || txtNama.toUpperCase().indexOf(input) > -1) ? "" : "none";
+                }
+            }
+        }
     </script>
 </body>
 </html>
