@@ -7,7 +7,7 @@ function handleLogin() {
         localStorage.setItem('snzmart_token', 'active');
         window.location.href = 'dashboard.html';
     } else {
-        Swal.fire({ icon: 'error', title: 'Akses Gagal', text: 'Email atau Password salah!', background: '#111827', color: '#fff' });
+        Swal.fire({ icon: 'error', title: 'Login Failed', background: '#111827', color: '#fff' });
     }
 }
 
@@ -21,15 +21,10 @@ function checkAuth() {
     loadData();
 }
 
-function toggleFields() {
-    const kat = document.getElementById('kat').value;
-    document.getElementById('field_akun').classList.toggle('hidden', kat !== 'AKUN');
-    document.getElementById('field_item').classList.toggle('hidden', kat !== 'ITEM');
-}
-
 function generateID(kategori) {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `${kategori.toUpperCase()}-${randomNum}`;
+    const prefix = kategori.substring(0, 3).replace(/\s/g, '').toUpperCase();
+    return `${prefix}-${randomNum}`;
 }
 
 async function uploadImage(file) {
@@ -38,10 +33,7 @@ async function uploadImage(file) {
     const publicUrl = `${CONFIG.SB_URL}/storage/v1/object/public/${CONFIG.BUCKET_NAME}/${fileName}`;
     const res = await fetch(uploadPath, {
         method: 'POST',
-        headers: {
-            'apikey': CONFIG.SB_KEY,
-            'Authorization': `Bearer ${CONFIG.SB_KEY}`
-        },
+        headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` },
         body: file
     });
     return res.ok ? publicUrl : null;
@@ -54,14 +46,17 @@ function prepareEdit(item) {
     document.getElementById('variant').value = item.variant || '';
     document.getElementById('harga').value = item.harga;
     document.getElementById('deskripsi').value = item.deskripsi;
-    toggleFields();
-    if (item.kategori === 'AKUN') {
-        document.getElementById('bulk_akun').value = `${item.email}|${item.pw}`;
+    
+    let currentData = "";
+    if (item.email && item.pw) {
+        currentData = `${item.email}|${item.pw}`;
     } else {
-        document.getElementById('link_data').value = item.link || '';
+        currentData = item.link || '';
     }
+    document.getElementById('bulk_data').value = currentData;
+    
     const btnSave = document.getElementById('btn_save');
-    btnSave.innerText = "UPDATE PRODUCT DATA";
+    btnSave.innerText = "UPDATE DATA";
     btnSave.classList.replace('bg-blue-600', 'bg-green-600');
     document.getElementById('btn_cancel').classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -73,11 +68,10 @@ function resetForm() {
     document.getElementById('variant').value = '';
     document.getElementById('harga').value = '';
     document.getElementById('deskripsi').value = '';
-    document.getElementById('bulk_akun').value = '';
-    document.getElementById('link_data').value = '';
+    document.getElementById('bulk_data').value = '';
     document.getElementById('foto_file').value = '';
     const btnSave = document.getElementById('btn_save');
-    btnSave.innerText = "UPLOAD PRODUCT";
+    btnSave.innerText = "UPLOAD TO SYSTEM";
     btnSave.classList.replace('bg-green-600', 'bg-blue-600');
     document.getElementById('btn_cancel').classList.add('hidden');
 }
@@ -88,27 +82,44 @@ async function saveProduct() {
     const kat = document.getElementById('kat').value;
     const nama = document.getElementById('nama').value;
     const harga = document.getElementById('harga').value;
-    if (!nama || !harga) return Swal.fire('Error', 'Nama & Harga wajib isi', 'error');
+    const bulkInput = document.getElementById('bulk_data').value.trim();
+
+    if (!nama || !harga || !bulkInput) return Swal.fire('Error', 'Nama, Harga, dan Data wajib diisi', 'error');
+
     let imgUrl = "";
     if (fileInput.files.length > 0) {
-        Swal.fire({ title: 'Processing Image...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Uploading Image...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
         imgUrl = await uploadImage(fileInput.files[0]);
     }
+
     const basePayload = {
         kategori: kat,
         nama: nama,
         variant: document.getElementById('variant').value,
         harga: parseInt(harga),
-        deskripsi: document.getElementById('deskripsi').value,
-        link: document.getElementById('link_data').value
+        deskripsi: document.getElementById('deskripsi').value
     };
+
     if (imgUrl) basePayload.foto_url = imgUrl;
-    if (kat === 'AKUN' && !editId) {
-        const lines = document.getElementById('bulk_akun').value.trim().split('\n');
+
+    const lines = bulkInput.split('\n');
+
+    if (!editId) {
+        Swal.fire({ title: 'Processing Bulk...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
         for (let line of lines) {
-            if (!line.includes('|')) continue;
-            const [email, pw] = line.split('|');
-            const payload = { ...basePayload, id: generateID(kat), email: email.trim(), pw: pw.trim() };
+            const currentLine = line.trim();
+            if (!currentLine) continue;
+
+            const payload = { ...basePayload, id: generateID(kat) };
+            
+            if (currentLine.includes('|')) {
+                const parts = currentLine.split('|');
+                payload.email = parts[0].trim();
+                payload.pw = parts[1].trim();
+            } else {
+                payload.link = currentLine;
+            }
+
             await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}`, 'Content-Type': 'application/json' },
@@ -117,46 +128,74 @@ async function saveProduct() {
         }
     } else {
         const payload = { ...basePayload };
-        if (kat === 'AKUN') {
-            const acc = document.getElementById('bulk_akun').value.split('|');
-            payload.email = acc[0] ? acc[0].trim() : '';
-            payload.pw = acc[1] ? acc[1].trim() : '';
+        const singleLine = lines[0].trim();
+        if (singleLine.includes('|')) {
+            const parts = singleLine.split('|');
+            payload.email = parts[0].trim();
+            payload.pw = parts[1].trim();
+            payload.link = null;
+        } else {
+            payload.link = singleLine;
+            payload.email = null;
+            payload.pw = null;
         }
-        const method = editId ? 'PATCH' : 'POST';
-        const url = editId ? `${API_URL}?id=eq.${editId}` : API_URL;
-        if (!editId) payload.id = generateID(kat);
-        await fetch(url, {
-            method: method,
+
+        await fetch(`${API_URL}?id=eq.${editId}`, {
+            method: 'PATCH',
             headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}`, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
     }
+
     Swal.fire('Success', 'Inventory Updated', 'success');
     resetForm();
     loadData();
 }
 
 async function loadData() {
-    const res = await fetch(`${API_URL}?select=*&order=created_at.desc`, {
+    const res = await fetch(`${API_URL}?select=*&order=kategori.asc,nama.asc`, {
         headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
     });
     const data = await res.json();
     const table = document.getElementById('productTableBody');
+    const countLabel = document.getElementById('productCount');
+    
     if(!table) return;
     table.innerHTML = '';
+    if(countLabel) countLabel.innerText = `${data.length} Items Total`;
+    
     data.forEach(item => {
         table.innerHTML += `
-            <tr class="border-b border-gray-900 hover:bg-gray-900/50 transition">
-                <td class="p-4">
-                    <div class="font-bold uppercase tracking-tight">${item.nama}</div>
-                    <div class="text-[10px] text-blue-500 font-mono">${item.variant || '-'}</div>
-                    <div class="text-[9px] text-gray-600 font-mono">${item.id}</div>
+            <tr class="hover:bg-blue-500/[0.02] transition-all group">
+                <td class="p-6">
+                    <div class="flex items-center gap-3">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-black text-blue-500 uppercase tracking-tighter mb-1">${item.kategori}</span>
+                            <span class="text-base font-bold text-white uppercase tracking-tight">${item.nama}</span>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="bg-gray-800 text-gray-400 text-[9px] px-2 py-0.5 rounded-md font-bold border border-gray-700">VARIANT: ${item.variant || 'STANDARD'}</span>
+                                <span class="text-[9px] text-gray-600 font-mono tracking-tighter">#${item.id}</span>
+                            </div>
+                        </div>
+                    </div>
                 </td>
-                <td class="p-4 text-xs font-black text-gray-500 text-center">${item.kategori}</td>
-                <td class="p-4 text-green-500 font-mono">Rp${parseInt(item.harga).toLocaleString()}</td>
-                <td class="p-4 text-center">
-                    <button onclick='prepareEdit(${JSON.stringify(item)})' class="text-blue-400 text-xs font-bold uppercase mx-1">Edit</button>
-                    <button onclick="deleteData('${item.id}')" class="text-red-600 text-xs font-bold uppercase mx-1">Del</button>
+                <td class="p-6">
+                    <div class="text-green-500 font-black font-mono text-base">Rp${parseInt(item.harga).toLocaleString()}</div>
+                    <div class="text-[9px] text-gray-600 uppercase font-bold tracking-widest mt-1">Unit Price</div>
+                </td>
+                <td class="p-6 text-center">
+                    <div class="flex items-center justify-center gap-4">
+                        <button onclick='prepareEdit(${JSON.stringify(item)})' class="bg-blue-500/10 text-blue-500 p-2 rounded-xl hover:bg-blue-500 hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                        <button onclick="deleteData('${item.id}')" class="bg-red-500/10 text-red-500 p-2 rounded-xl hover:bg-red-500 hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -164,7 +203,7 @@ async function loadData() {
 }
 
 async function deleteData(id) {
-    const ask = await Swal.fire({ title: 'Delete?', text: id, background: '#111827', color: '#fff', showCancelButton: true });
+    const ask = await Swal.fire({ title: 'Delete?', text: id, background: '#111827', color: '#fff', showCancelButton: true, confirmButtonColor: '#d33' });
     if(ask.isConfirmed) {
         await fetch(`${API_URL}?id=eq.${id}`, {
             method: 'DELETE',
