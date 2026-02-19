@@ -37,7 +37,6 @@
                     <div class="mb-6 flex justify-between items-center">
                         <div>
                             <h3 class="text-sm font-black text-white uppercase tracking-widest italic">📂 Folder Kategori</h3>
-                            <p class="text-[9px] text-gray-500 uppercase mt-1 italic font-bold">Pencet 'ADD' untuk isi produk</p>
                         </div>
                         <button onclick="addCategory()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-xs font-black transition-all">+ NEW</button>
                     </div>
@@ -80,7 +79,12 @@
                         </div>
 
                         <div>
-                            <label class="text-[10px] font-bold text-gray-500 ml-1 mb-1 block uppercase">Data Akun (Email|Pass)</label>
+                            <label class="text-[10px] font-bold text-blue-400 ml-1 mb-1 block uppercase italic text-blue-500">Deskripsi (Tampil di Bot)</label>
+                            <input type="text" id="deskripsi" placeholder="cth: Via invite email, Full Garansi" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 text-xs">
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 ml-1 mb-1 block uppercase">Data Akun (Bulk)</label>
                             <textarea id="bulk_data" placeholder="user1|pass1&#10;user2|pass2" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 h-24 outline-none font-mono text-xs focus:border-blue-500"></textarea>
                         </div>
 
@@ -106,7 +110,7 @@
                             <thead>
                                 <tr class="text-gray-500 text-[10px] uppercase font-black border-b border-gray-800">
                                     <th class="p-6">ID / Kode Bot</th>
-                                    <th class="p-6">Detail Produk</th>
+                                    <th class="p-6">Detail & Deskripsi</th>
                                     <th class="p-6">Harga & Stok</th>
                                     <th class="p-6 text-center">Aksi</th>
                                 </tr>
