@@ -3,91 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>docs | snzmart</title>
+    <title>docs| SNZMART</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=fira+code:wght@400;500&display=swap');
-        .console-text { font-family: 'fira code', monospace; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .code-font { font-family: 'Fira Code', monospace; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0b0f1a; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 10px; }
+        .digital-clock { font-family: 'Courier New', Courier, monospace; }
         .cursor { display: inline-block; width: 6px; height: 12px; background: #3b82f6; animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        pre { tab-size: 2; white-space: pre-wrap; word-break: break-all; }
-        .code-container { background: rgba(0, 0, 0, 0.5); border: 1px solid #1f2937; padding: 1rem; border-radius: 0.75rem; margin-top: 0.5rem; }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-400 font-sans text-xs">
-
-    <nav class="bg-gray-900/50 backdrop-blur-md px-5 py-3 flex justify-between items-center border-b border-gray-800 sticky top-0 z-50">
-        <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <h1 class="text-sm font-bold tracking-tight text-blue-500 lowercase">snzmart docs</h1>
+<body class="bg-[#0b0f1a] text-gray-100">
+    <nav class="bg-[#111827]/80 backdrop-blur-md p-5 flex justify-between items-center border-b border-gray-800 sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="w-3 h-3 bg-blue-600 rounded-full shadow-[0_0_15px_#2563eb]"></div>
+            <h1 class="text-2xl font-black tracking-tighter text-white uppercase italic">SNZMART DOCS</h1>
         </div>
-        <div class="flex gap-4 items-center text-[10px] font-medium lowercase">
-            <a href="dashboard.html" class="hover:text-white transition">inventory</a>
-            <button onclick="handleLogout()" class="text-red-500/80">exit</button>
+        
+        <div class="flex items-center gap-8">
+            <div class="hidden md:flex flex-col items-end">
+                <div id="clock" class="digital-clock text-xl font-bold text-blue-500 tracking-widest">00:00 00</div>
+                <div id="date" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">MEMUAT...</div>
+            </div>
+            <div class="flex gap-6 items-center text-[10px] font-bold uppercase tracking-widest border-l border-gray-800 pl-8">
+                <a href="dashboard.html" class="text-gray-400 hover:text-white transition">Inventori</a>
+                <a href="docs.html" class="text-blue-500">Integrasi</a>
+                <button onclick="handleLogout()" class="bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all">Keluar</button>
+            </div>
         </div>
     </nav>
 
-    <div class="container mx-auto p-4 max-w-3xl">
+    <div class="container mx-auto p-6 max-w-4xl">
         
-        <div class="bg-gray-900/30 rounded-xl border border-gray-800 shadow-sm overflow-hidden mb-6">
-            <div class="bg-gray-900/50 px-3 py-2 border-b border-gray-800 flex items-center justify-between">
-                <span class="text-[9px] text-gray-600 font-mono lowercase tracking-wider">system status</span>
+        <div class="mb-10 bg-[#111827] rounded-[2rem] border border-gray-800 overflow-hidden shadow-2xl">
+            <div class="bg-gray-900/50 px-6 py-3 border-b border-gray-800 flex justify-between items-center">
+                <span class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Bot Integration Terminal</span>
             </div>
-            <div class="p-4 h-32 overflow-y-auto console-text text-[11px] leading-relaxed" id="consoleOutput">
-                <div class="text-blue-500">snzmart@user:~$ <span class="text-white">check --api-response-ready</span></div>
-                <div id="dynamicLogs"></div>
+            <div class="p-6 h-32 overflow-y-auto code-font text-[11px] leading-relaxed bg-[#0b0f1a]/50" id="consoleOutput">
+                <div class="text-blue-500">snzmart@bot:~$ <span class="text-white italic">run --full-guide</span></div>
+                <div id="dynamicLogs" class="mt-1"></div>
                 <div class="mt-1"><span class="cursor"></span></div>
             </div>
         </div>
 
-        <div class="space-y-10">
+        <div class="space-y-12">
+            
             <section>
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="text-blue-500 font-bold">#</span>
-                    <h3 class="font-bold text-gray-200 lowercase">ambil data produk (GET)</h3>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-purple-600 w-1.5 h-6 rounded-full"></div>
+                    <h3 class="text-xl font-black text-white uppercase italic tracking-tight">1. List Kategori (Unique)</h3>
                 </div>
-                <p class="text-gray-500 lowercase">gunakan endpoint ini untuk mengambil list menu atau stok.</p>
-                <div class="code-container">
-                    <pre id="codeGet" class="text-[10px] text-blue-400 leading-normal">loading...</pre>
-                </div>
-                
-                <p class="mt-4 text-gray-500 lowercase italic">contoh respon json yang akan diterima:</p>
-                <div class="code-container border-l-2 border-blue-500">
-                    <pre class="text-[10px] text-yellow-500/90 font-mono">
-[
-  {
-    "id": "AKUN-1234",
-    "nama": "netflix premium 1 bulan",
-    "harga": 35000,
-    "kategori": "AKUN",
-    "email": "user@example.com",
-    "pw": "pass123",
-    "deskripsi": "akun private garansi full",
-    "foto_url": "https://url-gambar.com/foto.jpg"
-  }
-]</pre>
+                <p class="text-gray-500 text-sm mb-4">Ambil semua kategori yang ada di database tanpa duplikat untuk menu awal bot.</p>
+                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 overflow-hidden">
+                    <pre id="codeKat" class="code-font text-[11px] text-purple-400 overflow-x-auto">Memuat...</pre>
                 </div>
             </section>
 
             <section>
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="text-red-500 font-bold">#</span>
-                    <h3 class="font-bold text-gray-200 lowercase">hapus data / beli (DELETE)</h3>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-blue-600 w-1.5 h-6 rounded-full"></div>
+                    <h3 class="text-xl font-black text-white uppercase italic tracking-tight">2. List Produk per Kategori</h3>
                 </div>
-                <p class="text-gray-500 lowercase">gunakan ID kategori (contoh: AKUN-1234) untuk menghapus data setelah dibeli.</p>
-                <div class="code-container">
-                    <pre id="codeDel" class="text-[10px] text-green-400 leading-normal">loading...</pre>
-                </div>
-
-                <p class="mt-4 text-gray-500 lowercase italic">respon jika berhasil (204 No Content):</p>
-                <div class="code-container border-l-2 border-green-500">
-                    <pre class="text-[10px] text-yellow-500/90 font-mono">
-// Tidak ada body respon (kosong)
-// Status Code: 204 No Content berarti data berhasil dihapus</pre>
+                <p class="text-gray-500 text-sm mb-4">Tampilkan daftar produk beserta ID-nya setelah user memilih kategori tertentu.</p>
+                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 overflow-hidden">
+                    <pre id="codeList" class="code-font text-[11px] text-blue-400 overflow-x-auto">Memuat...</pre>
                 </div>
             </section>
+
+            <section>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-yellow-600 w-1.5 h-6 rounded-full"></div>
+                    <h3 class="text-xl font-black text-white uppercase italic tracking-tight">3. Detail Produk Tunggal</h3>
+                </div>
+                <p class="text-gray-500 text-sm mb-4">Ambil informasi lengkap dari satu produk berdasarkan ID spesifik.</p>
+                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 overflow-hidden">
+                    <pre id="codeDetail" class="code-font text-[11px] text-yellow-500 overflow-x-auto">Memuat...</pre>
+                </div>
+            </section>
+
+            <section>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="bg-red-600 w-1.5 h-6 rounded-full"></div>
+                    <h3 class="text-xl font-black text-white uppercase italic tracking-tight">4. Hapus Produk (Beli)</h3>
+                </div>
+                <p class="text-gray-500 text-sm mb-4">Gunakan perintah DELETE setelah pembayaran diverifikasi sukses.</p>
+                <div class="bg-[#111827] p-6 rounded-3xl border border-gray-800 overflow-hidden">
+                    <pre id="codeDel" class="code-font text-[11px] text-red-400 overflow-x-auto">Memuat...</pre>
+                </div>
+            </section>
+
         </div>
+
+        <footer class="mt-20 text-center pb-10 border-t border-gray-900 pt-10">
+            <p class="text-[10px] font-black text-gray-700 uppercase tracking-[0.4em]">SNZMART API DOCUMENTATION &copy; 2026</p>
+        </footer>
     </div>
 
     <script src="config.js"></script>
@@ -96,37 +109,42 @@
         const logsContainer = document.getElementById('dynamicLogs');
         
         function renderIntegrationCode() {
-            const getBlock = document.getElementById('codeGet');
+            const katBlock = document.getElementById('codeKat');
+            const listBlock = document.getElementById('codeList');
+            const detailBlock = document.getElementById('codeDetail');
             const delBlock = document.getElementById('codeDel');
 
             if (typeof CONFIG !== 'undefined') {
-                getBlock.innerText = `const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=*", {
-  headers: {
-    "apikey": "${CONFIG.SB_KEY}",
-    "Authorization": "Bearer ${CONFIG.SB_KEY}"
-  }
+                katBlock.innerText = `// Ambil kategori unik untuk menu bot
+const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=kategori", {
+    headers: { "apikey": "${CONFIG.SB_KEY}", "Authorization": "Bearer ${CONFIG.SB_KEY}" }
 });
+const categories = [...new Set(res.data.map(item => item.kategori))];`;
 
-// data bisa diakses di res.data
-console.log(res.data);`;
+                listBlock.innerText = `// Tampilkan semua produk dalam satu kategori
+const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=id,nama,harga,variant&kategori=eq.\${kategoriTerpilih}", {
+    headers: { "apikey": "${CONFIG.SB_KEY}", "Authorization": "Bearer ${CONFIG.SB_KEY}" }
+});`;
 
-                delBlock.innerText = `// Ganti {id} dengan ID produk (misal: AKUN-8292)
-const id = "AKUN-8292";
+                detailBlock.innerText = `// Ambil detail lengkap 1 produk saja
+const res = await axios.get("${CONFIG.SB_URL}/rest/v1/produk?select=*&id=eq.\${targetId}&limit=1", {
+    headers: { "apikey": "${CONFIG.SB_KEY}", "Authorization": "Bearer ${CONFIG.SB_KEY}" }
+});
+const detail = res.data[0];`;
 
-await axios.delete("${CONFIG.SB_URL}/rest/v1/produk?id=eq." + id, {
-  headers: {
-    "apikey": "${CONFIG.SB_KEY}",
-    "Authorization": "Bearer ${CONFIG.SB_KEY}"
-  }
+                delBlock.innerText = `// Hapus stok dari database
+await axios.delete("${CONFIG.SB_URL}/rest/v1/produk?id=eq.\${id}", {
+    headers: { "apikey": "${CONFIG.SB_KEY}", "Authorization": "Bearer ${CONFIG.SB_KEY}" }
 });`;
             }
         }
 
         async function simulateLogs() {
             const logs = [
-                { t: "fetching api blueprints...", c: "text-gray-600" },
-                { t: "json response schema: LOADED", c: "text-green-600" },
-                { t: "integration guide: READY", c: "text-blue-400" }
+                { t: "analyzing database schema...", c: "text-gray-500" },
+                { t: "mapping category unique filters... done", c: "text-purple-400" },
+                { t: "mapping single product selectors... done", c: "text-yellow-500" },
+                { t: "full api documentation ready", c: "text-green-500 font-bold" }
             ];
             for (let log of logs) {
                 await new Promise(r => setTimeout(r, 600));
@@ -138,7 +156,9 @@ await axios.delete("${CONFIG.SB_URL}/rest/v1/produk?id=eq." + id, {
         }
 
         window.onload = () => {
-            if(typeof checkAuth === "function") checkAuth();
+            checkAuth();
+            updateTime();
+            setInterval(updateTime, 1000);
             renderIntegrationCode();
             simulateLogs();
         };
