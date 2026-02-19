@@ -32,35 +32,31 @@
                         <option value="ITEM">CATEGORY: ITEM</option>
                     </select>
                     
-                    <input type="text" id="nama" placeholder="Product Name" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
-                    <input type="number" id="harga" placeholder="Price (Numeric)" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
+                    <input type="text" id="nama" placeholder="Product Name (ex: Netflix)" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
+                    <input type="text" id="variant" placeholder="Variant (ex: Premium / 1 Month)" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
+                    <input type="number" id="harga" placeholder="Price" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
                     
                     <div id="field_akun" class="space-y-4">
-                        <input type="text" id="email_data" placeholder="Email Account" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
-                        <input type="text" id="pw_data" placeholder="Password Account" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
+                        <textarea id="bulk_akun" placeholder="Bulk Accounts (Format: email|pass)&#10;One per line" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 h-32 outline-none font-mono text-xs"></textarea>
                     </div>
                     
-                    <div id="field_item" class="hidden space-y-4">
-                        <input type="text" id="link_data" placeholder="Direct Download/Access Link" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
+                    <div id="field_item" class="hidden">
+                        <input type="text" id="link_data" placeholder="Direct Link / Access" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
                     </div>
 
-                    <textarea id="deskripsi" placeholder="Product Description..." class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 h-28 outline-none"></textarea>
+                    <textarea id="deskripsi" placeholder="Description..." class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 h-20 outline-none"></textarea>
                     
-                    <label class="block text-[10px] font-bold text-gray-500 mb-1 uppercase ml-2">Product Photo</label>
+                    <label class="block text-[10px] font-bold text-gray-500 ml-2 uppercase">Photo (Optional)</label>
                     <input type="file" id="foto_file" class="w-full p-3 bg-gray-800 rounded-2xl border border-gray-700 text-xs">
                     
                     <div class="pt-2 space-y-2">
-                        <button id="btn_save" onclick="saveProduct()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-black transition-all shadow-lg shadow-blue-900/20">UPLOAD TO SNZMART</button>
-                        <button id="btn_cancel" onclick="resetForm()" class="hidden w-full bg-gray-800 hover:bg-gray-700 p-4 rounded-2xl font-black transition-all border border-gray-700 text-gray-400">CANCEL EDIT</button>
+                        <button id="btn_save" onclick="saveProduct()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-black transition-all">UPLOAD PRODUCT</button>
+                        <button id="btn_cancel" onclick="resetForm()" class="hidden w-full bg-gray-800 p-4 rounded-2xl font-black text-gray-400 border border-gray-700">CANCEL</button>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-2 bg-gray-900 p-6 rounded-3xl border border-gray-800 shadow-xl">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-sm font-black text-gray-500 uppercase tracking-widest">Active Inventory</h3>
-                    <span class="text-[10px] bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full font-bold border border-blue-500/20">LIVE DATA</span>
-                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>
@@ -75,15 +71,6 @@
                     </table>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div id="previewModal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-        <div class="bg-gray-900 p-8 rounded-3xl max-w-md w-full border border-gray-800 relative shadow-2xl">
-            <button onclick="closePreview()" class="absolute top-4 right-6 text-4xl text-gray-600 hover:text-white transition">&times;</button>
-            <h2 id="p_nama" class="text-2xl font-black text-blue-500 italic uppercase"></h2>
-            <img id="p_foto" src="" class="w-full h-48 object-cover rounded-2xl my-4 bg-gray-800 border border-gray-700">
-            <div id="detailArea" class="text-sm space-y-4 border-t border-gray-800 pt-4 text-gray-400 leading-relaxed"></div>
         </div>
     </div>
 
