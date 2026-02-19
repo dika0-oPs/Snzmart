@@ -6,69 +6,106 @@
     <title>Dashboard | Snzmart</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0b0f1a; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 10px; }
+    </style>
 </head>
-<body class="bg-gray-950 text-gray-100 font-sans">
-    <nav class="bg-gray-900 p-5 flex justify-between items-center border-b border-gray-800 sticky top-0 z-50">
-        <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-            <h1 class="text-2xl font-black tracking-tighter text-blue-500 italic">Snzmart</h1>
+<body class="bg-[#0b0f1a] text-gray-100">
+    <nav class="bg-[#111827]/80 backdrop-blur-md p-5 flex justify-between items-center border-b border-gray-800 sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
+            <h1 class="text-2xl font-extrabold tracking-tighter text-blue-500 italic">SNZMART<span class="text-white">.v1</span></h1>
         </div>
-        <div class="flex gap-6 items-center text-xs font-bold uppercase tracking-widest">
+        <div class="flex gap-6 items-center text-[10px] font-bold uppercase tracking-widest">
             <a href="dashboard.html" class="text-blue-500">Inventory</a>
             <a href="docs.html" class="text-gray-400 hover:text-white transition">Docs</a>
-            <button onclick="handleLogout()" class="text-red-500 border border-red-500/30 px-3 py-1 rounded-lg">Exit</button>
+            <button onclick="handleLogout()" class="bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all">Exit</button>
         </div>
     </nav>
 
     <div class="container mx-auto p-6">
-        <div class="grid lg:grid-cols-3 gap-8">
-            <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 h-fit shadow-xl">
-                <h3 class="text-sm font-black mb-6 text-gray-500 uppercase tracking-widest">Product Editor</h3>
-                <div class="space-y-4 text-sm">
-                    <input type="hidden" id="edit_id">
-                    
-                    <select id="kat" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none" onchange="toggleFields()">
-                        <option value="AKUN">CATEGORY: AKUN</option>
-                        <option value="ITEM">CATEGORY: ITEM</option>
-                    </select>
-                    
-                    <input type="text" id="nama" placeholder="Product Name (ex: Netflix)" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
-                    <input type="text" id="variant" placeholder="Variant (ex: Premium / 1 Month)" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
-                    <input type="number" id="harga" placeholder="Price" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
-                    
-                    <div id="field_akun" class="space-y-4">
-                        <textarea id="bulk_akun" placeholder="Bulk Accounts (Format: email|pass)&#10;One per line" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 h-32 outline-none font-mono text-xs"></textarea>
+        <div class="grid lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4">
+                <div class="bg-[#111827] p-6 rounded-[2rem] border border-gray-800 shadow-2xl sticky top-24">
+                    <div class="mb-6">
+                        <h3 class="text-sm font-black text-white uppercase tracking-widest">Product Editor</h3>
+                        <p class="text-[10px] text-gray-500 uppercase mt-1">Manage your inventory hierarchy</p>
                     </div>
                     
-                    <div id="field_item" class="hidden">
-                        <input type="text" id="link_data" placeholder="Direct Link / Access" class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 outline-none">
-                    </div>
+                    <div class="space-y-4 text-sm">
+                        <input type="hidden" id="edit_id">
+                        
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Category</label>
+                            <select id="kat" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 transition-all appearance-none text-blue-400 font-bold">
+                                <option value="AKUN">AKUN</option>
+                                <option value="APP PREMIUM">APP PREMIUM</option>
+                                <option value="STREAMING">STREAMING</option>
+                                <option value="GAME">GAME</option>
+                                <option value="TOOLS">TOOLS</option>
+                                <option value="VOUCHER">VOUCHER</option>
+                                <option value="JASA">JASA</option>
+                                <option value="ITEM">ITEM</option>
+                            </select>
+                        </div>
 
-                    <textarea id="deskripsi" placeholder="Description..." class="w-full p-4 bg-gray-800 rounded-2xl border border-gray-700 h-20 outline-none"></textarea>
-                    
-                    <label class="block text-[10px] font-bold text-gray-500 ml-2 uppercase">Photo (Optional)</label>
-                    <input type="file" id="foto_file" class="w-full p-3 bg-gray-800 rounded-2xl border border-gray-700 text-xs">
-                    
-                    <div class="pt-2 space-y-2">
-                        <button id="btn_save" onclick="saveProduct()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-black transition-all">UPLOAD PRODUCT</button>
-                        <button id="btn_cancel" onclick="resetForm()" class="hidden w-full bg-gray-800 p-4 rounded-2xl font-black text-gray-400 border border-gray-700">CANCEL</button>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Product Name</label>
+                                <input type="text" id="nama" placeholder="ex: Netflix" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Variant</label>
+                                <input type="text" id="variant" placeholder="ex: 2U / 1 Month" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Price (IDR)</label>
+                            <input type="number" id="harga" placeholder="0" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 outline-none focus:border-blue-500 font-mono">
+                        </div>
+                        
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Bulk Data (Email|Pass or Link)</label>
+                            <textarea id="bulk_data" placeholder="data1|pass1&#10;data2|pass2" class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 h-32 outline-none font-mono text-xs focus:border-blue-500"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 ml-2 mb-1 block uppercase">Description</label>
+                            <textarea id="deskripsi" placeholder="Small notes..." class="w-full p-4 bg-[#0b0f1a] rounded-2xl border border-gray-800 h-20 outline-none focus:border-blue-500"></textarea>
+                        </div>
+                        
+                        <div class="pt-2">
+                            <button id="btn_save" onclick="saveProduct()" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-black transition-all shadow-lg shadow-blue-500/20 active:scale-95">UPLOAD TO SYSTEM</button>
+                            <button id="btn_cancel" onclick="resetForm()" class="hidden w-full mt-2 bg-gray-800 p-4 rounded-2xl font-black text-gray-400 border border-gray-700">CANCEL EDIT</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="lg:col-span-2 bg-gray-900 p-6 rounded-3xl border border-gray-800 shadow-xl">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="text-gray-600 text-[10px] uppercase font-black border-b border-gray-800">
-                                <th class="p-4 tracking-tighter">Product Info</th>
-                                <th class="p-4 tracking-tighter">Category</th>
-                                <th class="p-4 tracking-tighter">Price</th>
-                                <th class="p-4 text-center tracking-tighter">Manage</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productTableBody" class="text-sm"></tbody>
-                    </table>
+            <div class="lg:col-span-8">
+                <div class="bg-[#111827] rounded-[2rem] border border-gray-800 shadow-2xl overflow-hidden">
+                    <div class="p-6 border-b border-gray-800 bg-[#111827]/50 flex justify-between items-center">
+                        <h3 class="text-sm font-black text-white uppercase tracking-widest">Active Inventory</h3>
+                        <div class="text-[10px] bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full border border-blue-500/20 font-bold uppercase" id="productCount">0 Items</div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-gray-500 text-[10px] uppercase font-black border-b border-gray-800">
+                                    <th class="p-6">Product Hierarchy</th>
+                                    <th class="p-6">Pricing</th>
+                                    <th class="p-6 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productTableBody" class="text-sm divide-y divide-gray-800/50">
+                                </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
