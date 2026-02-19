@@ -1,195 +1,145 @@
-const API_URL = `${CONFIG.SB_URL}/rest/v1/produk`;
+const checkAuth = () => {
+    const session = localStorage.getItem("snzmart_session");
+    if (!session && !window.location.href.includes("index.html")) {
+        window.location.href = "index.html";
+    }
+};
 
-function updateTime() {
+const handleLogout = () => {
+    localStorage.removeItem("snzmart_session");
+    window.location.href = "index.html";
+};
+
+const updateTime = () => {
     const now = new Date();
-    const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    if(document.getElementById('clock')) document.getElementById('clock').innerText = `${hours}:${minutes} ${seconds}`;
-    if(document.getElementById('date')) document.getElementById('date').innerText = now.toLocaleDateString('id-ID', optionsDate).toUpperCase();
-}
-
-function handleLogin() {
-    const e = document.getElementById('loginEmail').value;
-    const p = document.getElementById('loginPw').value;
-    if(e === CONFIG.ADMIN_AUTH.email && p === CONFIG.ADMIN_AUTH.pw) {
-        localStorage.setItem('snzmart_token', 'active');
-        window.location.href = 'dashboard.html';
-    } else {
-        Swal.fire({ icon: 'error', title: 'Akses Ditolak', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    if (document.getElementById('clock')) {
+        document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+        document.getElementById('date').textContent = now.toLocaleDateString('id-ID', options);
     }
-}
-
-function handleLogout() {
-    localStorage.removeItem('snzmart_token');
-    window.location.href = 'index.html';
-}
-
-function checkAuth() {
-    if(!localStorage.getItem('snzmart_token')) window.location.href = 'index.html';
-    loadData();
-}
-
-function generateID(kategori) {
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const prefix = kategori.substring(0, 3).replace(/\s/g, '').toUpperCase();
-    return `${prefix}-${randomNum}`;
-}
-
-function prepareEdit(item) {
-    document.getElementById('edit_id').value = item.id;
-    document.getElementById('kat').value = item.kategori;
-    document.getElementById('nama').value = item.nama;
-    document.getElementById('variant').value = item.variant || '';
-    document.getElementById('harga').value = item.harga;
-    document.getElementById('foto_url').value = item.foto_url || '';
-    document.getElementById('deskripsi').value = item.deskripsi;
-    let currentData = (item.email && item.pw) ? `${item.email}|${item.pw}` : (item.link || '');
-    document.getElementById('bulk_data').value = currentData;
-    const btnSave = document.getElementById('btn_save');
-    btnSave.innerText = "PERBARUI DATA";
-    btnSave.classList.replace('bg-blue-600', 'bg-green-600');
-    document.getElementById('btn_cancel').classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function resetForm() {
-    document.getElementById('edit_id').value = '';
-    document.getElementById('nama').value = '';
-    document.getElementById('variant').value = '';
-    document.getElementById('harga').value = '';
-    document.getElementById('foto_url').value = '';
-    document.getElementById('deskripsi').value = '';
-    document.getElementById('bulk_data').value = '';
-    const btnSave = document.getElementById('btn_save');
-    btnSave.innerText = "SIMPAN KE SISTEM";
-    btnSave.classList.replace('bg-green-600', 'bg-blue-600');
-    document.getElementById('btn_cancel').classList.add('hidden');
-}
-
-async function saveProduct() {
-    const editId = document.getElementById('edit_id').value;
-    const kat = document.getElementById('kat').value;
-    const nama = document.getElementById('nama').value;
-    const harga = document.getElementById('harga').value;
-    const fUrl = document.getElementById('foto_url').value;
-    const bulkInput = document.getElementById('bulk_data').value.trim();
-
-    if (!kat || kat === "") {
-        return Swal.fire({ icon: 'warning', title: 'Kategori Kosong', text: 'Pilih kategori produk terlebih dahulu!', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
-    }
-    if (!nama || !harga || !bulkInput) {
-        return Swal.fire({ icon: 'warning', title: 'Data Tidak Lengkap', text: 'Nama, Harga, dan Data Bulk wajib diisi!', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
-    }
-
-    const basePayload = {
-        kategori: kat,
-        nama: nama,
-        variant: document.getElementById('variant').value,
-        harga: parseInt(harga),
-        foto_url: fUrl,
-        deskripsi: document.getElementById('deskripsi').value
-    };
-
-    const lines = bulkInput.split('\n');
-
-    if (!editId) {
-        Swal.fire({ title: 'Memproses...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
-        for (let line of lines) {
-            const currentLine = line.trim();
-            if (!currentLine) continue;
-            const payload = { ...basePayload, id: generateID(kat) };
-            if (currentLine.includes('|')) {
-                const parts = currentLine.split('|');
-                payload.email = parts[0].trim();
-                payload.pw = parts[1].trim();
-            } else {
-                payload.link = currentLine;
-            }
-            await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-        }
-    } else {
-        const payload = { ...basePayload };
-        const singleLine = lines[0].trim();
-        if (singleLine.includes('|')) {
-            const parts = singleLine.split('|');
-            payload.email = parts[0].trim();
-            payload.pw = parts[1].trim();
-            payload.link = null;
-        } else {
-            payload.link = singleLine;
-            payload.email = null;
-            payload.pw = null;
-        }
-        await fetch(`${API_URL}?id=eq.${editId}`, {
-            method: 'PATCH',
-            headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-    }
-
-    Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Inventori SNZMART telah diperbarui!', background: '#111827', color: '#fff', confirmButtonColor: '#2563eb' });
-    resetForm();
-    loadData();
-}
+};
 
 async function loadData() {
-    const res = await fetch(`${API_URL}?select=*&order=kategori.asc,nama.asc`, {
-        headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
-    });
-    const data = await res.json();
-    const table = document.getElementById('productTableBody');
-    const countLabel = document.getElementById('productCount');
-    if(!table) return;
-    table.innerHTML = '';
-    if(countLabel) countLabel.innerText = `${data.length} Produk`;
-    
-    data.forEach(item => {
-        table.innerHTML += `
-            <tr class="hover:bg-blue-500/[0.02] transition-all group">
-                <td class="p-6">
-                    <div class="flex items-center gap-4">
-                        <div class="relative overflow-hidden w-10 h-10 rounded-lg border border-gray-800 bg-gray-900 flex-shrink-0">
-                            <img src="${item.foto_url || 'https://via.placeholder.com/100?text=SNZ'}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-[9px] font-black text-blue-500 uppercase tracking-tighter mb-0.5">${item.kategori}</span>
-                            <span class="text-sm font-bold text-white uppercase tracking-tight">${item.nama}</span>
-                            <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Varian: ${item.variant || '-'}</span>
-                        </div>
-                    </div>
-                </td>
-                <td class="p-6">
-                    <div class="text-green-500 font-black font-mono text-sm">Rp${parseInt(item.harga).toLocaleString()}</div>
-                    <span class="text-[8px] text-gray-600 font-mono italic uppercase">#${item.id}</span>
-                </td>
-                <td class="p-6 text-center">
-                    <div class="flex items-center justify-center gap-3">
-                        <button onclick='prepareEdit(${JSON.stringify(item)})' class="bg-blue-600/10 text-blue-400 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        </button>
-                        <button onclick="deleteData('${item.id}')" class="bg-red-600/10 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-}
-
-async function deleteData(id) {
-    const ask = await Swal.fire({ title: 'Hapus Produk?', text: `ID: ${id}`, icon: 'warning', background: '#111827', color: '#fff', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#1f2937', confirmButtonText: 'Ya, Hapus', cancelButtonText: 'Batal' });
-    if(ask.isConfirmed) {
-        await fetch(`${API_URL}?id=eq.${id}`, {
-            method: 'DELETE',
-            headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
+    const tableBody = document.getElementById('productTableBody');
+    if (!tableBody) return;
+    try {
+        const res = await fetch(`${CONFIG.SB_URL}/rest/v1/produk?select=*&order=created_at.desc`, {
+            method: 'GET',
+            headers: {
+                'apikey': CONFIG.SB_KEY,
+                'Authorization': `Bearer ${CONFIG.SB_KEY}`
+            }
         });
-        loadData();
+        const data = await res.json();
+        tableBody.innerHTML = '';
+        data.forEach((item, index) => {
+            const row = `
+                <tr class="border-b border-gray-800 hover:bg-white/5 transition">
+                    <td class="p-4 text-xs text-gray-500">${index + 1}</td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-3">
+                            <img src="${item.foto_url || 'https://placehold.co/40x40?text=No+Img'}" class="w-10 h-10 rounded-lg object-cover border border-gray-700">
+                            <div>
+                                <div class="text-sm font-bold text-white">${item.nama}</div>
+                                <div class="text-[10px] text-gray-500 tracking-widest uppercase">${item.id}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <span class="bg-blue-500/10 text-blue-500 text-[10px] font-bold px-2 py-1 rounded-md border border-blue-500/20">${item.kategori}</span>
+                    </td>
+                    <td class="p-4 text-sm font-bold text-green-400">Rp ${Number(item.harga).toLocaleString('id-ID')}</td>
+                    <td class="p-4">
+                        <div class="text-xs text-gray-300">${item.variant || '-'}</div>
+                        <div class="text-[10px] text-gray-500">${item.email || ''}</div>
+                    </td>
+                    <td class="p-4">
+                        <button onclick="deleteProduct('${item.id}')" class="p-2 hover:bg-red-500/20 text-red-500 rounded-lg transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tableBody.insertAdjacentHTML('beforeend', row);
+        });
+    } catch (err) {
+        console.error(err);
     }
 }
+
+async function saveProduct(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Memproses...';
+    const payload = {
+        id: document.getElementById('p_id').value,
+        nama: document.getElementById('p_nama').value,
+        harga: parseInt(document.getElementById('p_harga').value),
+        kategori: document.getElementById('p_kategori').value.toUpperCase(),
+        variant: document.getElementById('p_variant').value,
+        email: document.getElementById('p_email').value,
+        pw: document.getElementById('p_pw').value,
+        link: document.getElementById('p_link').value,
+        foto_url: document.getElementById('p_foto').value,
+        deskripsi: document.getElementById('p_desc').value
+    };
+    try {
+        const res = await fetch(`${CONFIG.SB_URL}/rest/v1/produk`, {
+            method: 'POST',
+            headers: {
+                'apikey': CONFIG.SB_KEY,
+                'Authorization': `Bearer ${CONFIG.SB_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            alert('Produk Berhasil Ditambahkan!');
+            window.location.reload();
+        } else {
+            const errorData = await res.json();
+            alert('Gagal menyimpan: ' + (errorData.message || 'Cek SQL Policy Supabase'));
+        }
+    } catch (err) {
+        alert('Terjadi kesalahan jaringan!');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+async function deleteProduct(id) {
+    if (!confirm('Hapus produk ini?')) return;
+    try {
+        const res = await fetch(`${CONFIG.SB_URL}/rest/v1/produk?id=eq.${id}`, {
+            method: 'DELETE',
+            headers: {
+                'apikey': CONFIG.SB_KEY,
+                'Authorization': `Bearer ${CONFIG.SB_KEY}`
+            }
+        });
+        if (res.ok) {
+            loadData();
+        } else {
+            alert('Gagal menghapus produk. Pastikan Policy DELETE aktif.');
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    updateTime();
+    setInterval(updateTime, 1000);
+    const pForm = document.getElementById('productForm');
+    if (pForm) {
+        pForm.addEventListener('submit', saveProduct);
+    }
+    loadData();
+});
