@@ -38,23 +38,42 @@ function addCategory() {
 
 async function deleteCategory(index, catName) {
     const ask = await Swal.fire({
-        title: 'Hapus Folder?',
-        text: `Hapus tampilan folder ${catName}? Data di database tetap aman.`,
+        title: 'Hapus Folder & Data?',
+        text: `Ini akan menghapus folder ${catName} dan SEMUA produk di dalamnya dari database!`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
         background: '#111827',
         color: '#fff'
     });
+
     if (ask.isConfirmed) {
-        categories.splice(index, 1);
-        localStorage.setItem('snz_categories', JSON.stringify(categories));
-        if (activeCategory === catName) {
-            activeCategory = "";
-            document.getElementById('productTableBody').innerHTML = '';
-            resetForm();
+        try {
+            Swal.fire({ title: 'Menghapus dari DB...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
+
+            await fetch(`${API_URL}?kategori=eq.${catName}`, {
+                method: 'DELETE',
+                headers: { 
+                    'apikey': CONFIG.SB_KEY, 
+                    'Authorization': `Bearer ${CONFIG.SB_KEY}` 
+                }
+            });
+
+            categories.splice(index, 1);
+            localStorage.setItem('snz_categories', JSON.stringify(categories));
+
+            if (activeCategory === catName) {
+                activeCategory = "";
+                document.getElementById('productTableBody').innerHTML = '';
+                resetForm();
+            }
+
+            renderCategories();
+            Swal.fire({ icon: 'success', title: 'Terhapus!', text: `Kategori ${catName} dan isinya bersih.`, background: '#111827', color: '#fff' });
+
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Gagal Hapus', text: e.message });
         }
-        renderCategories();
     }
 }
 
