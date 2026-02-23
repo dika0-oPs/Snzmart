@@ -83,7 +83,7 @@ function renderCategories() {
     categories.forEach((cat, index) => {
         const isActive = activeCategory === cat;
         list.innerHTML += `
-            <div onclick="selectCategory('${cat}')" class="folder-item flex justify-between items-center p-4 bg-[#0b0f1a] border ${isActive ? 'active-folder' : 'border-gray-800'} rounded-2xl cursor-pointer">
+            <div onclick="selectCategory('${cat}')" class="folder-item flex justify-between items-center p-4 bg-[#0b0f1a] border ${isActive ? 'active-folder border-blue-600' : 'border-gray-800'} rounded-2xl cursor-pointer">
                 <div class="flex items-center gap-3">
                     <button onclick="event.stopPropagation(); deleteCategory(${index}, '${cat}')" class="text-gray-600 hover:text-red-500 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -94,12 +94,13 @@ function renderCategories() {
             </div>
         `;
     });
+    
+    if (activeCategory) loadData();
 }
 
 function selectCategory(cat) {
     activeCategory = cat;
     renderCategories();
-    loadData();
 }
 
 function openEditor(cat) {
