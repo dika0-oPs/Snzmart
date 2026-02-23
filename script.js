@@ -39,7 +39,7 @@ function addCategory() {
 async function deleteCategory(index, catName) {
     const ask = await Swal.fire({
         title: 'Hapus Folder & Data?',
-        text: `Ini akan menghapus folder ${catName} dan SEMUA produk di dalamnya dari database!`,
+        text: `Ini akan menghapus folder ${catName} dan SEMUA produk di dalamnya!`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
@@ -49,36 +49,28 @@ async function deleteCategory(index, catName) {
 
     if (ask.isConfirmed) {
         try {
-            Swal.fire({ title: 'Menghapus dari DB...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
-
+            Swal.fire({ title: 'Menghapus...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
             await fetch(`${API_URL}?kategori=eq.${catName}`, {
                 method: 'DELETE',
-                headers: { 
-                    'apikey': CONFIG.SB_KEY, 
-                    'Authorization': `Bearer ${CONFIG.SB_KEY}` 
-                }
+                headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
             });
-
             categories.splice(index, 1);
             localStorage.setItem('snz_categories', JSON.stringify(categories));
-
             if (activeCategory === catName) {
                 activeCategory = "";
                 document.getElementById('productTableBody').innerHTML = '';
-                resetForm();
             }
-
             renderCategories();
-            Swal.fire({ icon: 'success', title: 'Terhapus!', text: `Kategori ${catName} dan isinya bersih.`, background: '#111827', color: '#fff' });
-
+            Swal.fire({ icon: 'success', title: 'Terhapus', background: '#111827', color: '#fff' });
         } catch (e) {
-            Swal.fire({ icon: 'error', title: 'Gagal Hapus', text: e.message });
+            Swal.fire({ icon: 'error', title: 'Gagal', text: e.message });
         }
     }
 }
 
 function renderCategories() {
     const list = document.getElementById('categoryList');
+    if (!list) return;
     list.innerHTML = '';
     categories.forEach((cat, index) => {
         const isActive = activeCategory === cat;
@@ -94,7 +86,6 @@ function renderCategories() {
             </div>
         `;
     });
-    
     if (activeCategory) loadData();
 }
 
@@ -135,43 +126,35 @@ async function saveProduct() {
     const stk = document.getElementById('stok_produk').value;
     const dsk = document.getElementById('deskripsi').value;
     const bulk = document.getElementById('bulk_data').value.trim();
-    if (!cid || !nama || !hrg) return Swal.fire({ icon: 'warning', title: 'Oops', text: 'ID, Nama, & Harga Wajib Diisi!' });
+    if (!cid || !nama || !hrg) return Swal.fire({ icon: 'warning', title: 'Oops', text: 'Data tidak lengkap' });
     const base = { kategori: activeCategory, nama: nama.toUpperCase(), variant: vari, harga: parseInt(hrg), stok: parseInt(stk || 0), deskripsi: dsk };
-    const lines = bulk.split('\n');
+    const lines = bulk.split('\n').filter(l => l.trim() !== "");
     try {
         Swal.fire({ title: 'Processing...', background: '#111827', color: '#fff', didOpen: () => Swal.showLoading() });
         if (!editId) {
-            let i = 1;
-            for (let line of lines) {
-                const curLine = line.trim();
-                if (!curLine) continue;
-                const finalId = lines.length > 1 ? `${cid}-${i}` : cid;
+            for (let i = 0; i < lines.length; i++) {
+                const finalId = lines.length > 1 ? `${cid}-${i+1}` : cid;
                 const payload = { ...base, id: finalId };
-                if (curLine.includes('|')) {
-                    const p = curLine.split('|');
-                    payload.email = p[0].trim();
-                    payload.pw = p[1].trim();
+                if (lines[i].includes('|')) {
+                    const [email, pw] = lines[i].split('|');
+                    payload.email = email.trim();
+                    payload.pw = pw.trim();
                 } else {
-                    payload.link = curLine;
+                    payload.link = lines[i].trim();
                 }
                 await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                i++;
             }
         } else {
             const payload = { ...base, id: cid };
-            const l = lines[0].trim();
-            if (l.includes('|')) {
-                const p = l.split('|');
-                payload.email = p[0].trim();
-                payload.pw = p[1].trim();
-                payload.link = null;
+            if (lines[0].includes('|')) {
+                const [email, pw] = lines[0].split('|');
+                payload.email = email.trim(); payload.pw = pw.trim(); payload.link = null;
             } else {
-                payload.link = l;
-                payload.email = null; payload.pw = null;
+                payload.link = lines[0].trim(); payload.email = null; payload.pw = null;
             }
             await fetch(`${API_URL}?id=eq.${editId}`, {
                 method: 'PATCH',
@@ -179,7 +162,7 @@ async function saveProduct() {
                 body: JSON.stringify(payload)
             });
         }
-        Swal.fire({ icon: 'success', title: 'Success', background: '#111827', color: '#fff' });
+        Swal.fire({ icon: 'success', title: 'Berhasil', background: '#111827', color: '#fff' });
         resetForm();
         loadData();
     } catch (e) {
@@ -189,42 +172,41 @@ async function saveProduct() {
 
 async function loadData() {
     if (!activeCategory) return;
-    const res = await fetch(`${API_URL}?kategori=eq.${activeCategory}&order=id.asc`, {
-        headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
-    });
-    const data = await res.json();
-    const table = document.getElementById('productTableBody');
-    table.innerHTML = '';
-    document.getElementById('productCount').innerText = `${data.length} Akun`;
-    data.forEach(item => {
-        const row = document.createElement('tr');
-        row.className = "hover:bg-blue-500/[0.02] transition-all group";
-        row.innerHTML = `
-            <td class="p-6">
-                <span class="text-blue-500 font-black text-[11px] tracking-widest uppercase italic font-mono">🔐 ${item.id}</span>
-            </td>
-            <td class="p-6">
-                <p class="font-black text-white italic uppercase text-sm">${item.nama}</p>
-                <p class="text-[10px] text-gray-400 font-bold tracking-tight uppercase">${item.variant}</p>
-                <p class="text-[9px] text-blue-400/80 mt-1 italic">📝 ${item.deskripsi || 'No Description'}</p>
-            </td>
-            <td class="p-6">
-                <p class="text-green-500 font-black text-sm">Rp${item.harga.toLocaleString()}</p>
-                <div class="flex gap-2 mt-1">
+    try {
+        const res = await fetch(`${API_URL}?kategori=eq.${activeCategory}&order=id.asc`, {
+            headers: { 'apikey': CONFIG.SB_KEY, 'Authorization': `Bearer ${CONFIG.SB_KEY}` }
+        });
+        const data = await res.json();
+        const table = document.getElementById('productTableBody');
+        table.innerHTML = '';
+        document.getElementById('productCount').innerText = `${data.length} Akun`;
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.className = "hover:bg-blue-500/[0.02] transition-all group";
+            row.innerHTML = `
+                <td class="p-6"><span class="text-blue-500 font-black text-[11px] font-mono">🔐 ${item.id}</span></td>
+                <td class="p-6">
+                    <p class="font-black text-white italic uppercase text-sm">${item.nama}</p>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase">${item.variant}</p>
+                    <p class="text-[9px] text-blue-400/80 mt-1 italic">📝 ${item.deskripsi || '-'}</p>
+                </td>
+                <td class="p-6">
+                    <p class="text-green-500 font-black text-sm">Rp${item.harga.toLocaleString()}</p>
                     <span class="text-[9px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded border border-gray-700">STOK: ${item.stok}</span>
-                    <span class="text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">SOLD: ${item.terjual || 0}</span>
-                </div>
-            </td>
-            <td class="p-6 text-center">
-                <div class="flex gap-2 justify-center opacity-0 group-hover:opacity-100 transition-all">
-                    <button id="edit-${item.id}" class="bg-blue-600/10 text-blue-400 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-[10px] font-bold">EDIT</button>
-                    <button onclick="deleteData('${item.id}')" class="bg-red-600/10 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white transition-all text-[10px] font-bold">HAPUS</button>
-                </div>
-            </td>
-        `;
-        table.appendChild(row);
-        document.getElementById(`edit-${item.id}`).onclick = () => prepareEdit(item);
-    });
+                </td>
+                <td class="p-6 text-center">
+                    <div class="flex gap-2 justify-center opacity-0 group-hover:opacity-100 transition-all">
+                        <button id="edit-${item.id}" class="bg-blue-600/10 text-blue-400 p-2 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-[10px] font-bold">EDIT</button>
+                        <button onclick="deleteData('${item.id}')" class="bg-red-600/10 text-red-500 p-2 rounded-lg hover:bg-red-600 hover:text-white transition-all text-[10px] font-bold">HAPUS</button>
+                    </div>
+                </td>
+            `;
+            table.appendChild(row);
+            document.getElementById(`edit-${item.id}`).onclick = () => prepareEdit(item);
+        });
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 function prepareEdit(item) {
